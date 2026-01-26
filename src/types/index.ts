@@ -30,3 +30,23 @@ export interface HistoryItem {
   config: QuestionConfig; // Configuration used for generation
   questions: Question[];  // Generated questions
 }
+
+// Difficulty level for linear equations
+// modify by jx: define difficulty level type for linear equations
+export type EquationDifficulty = 'easy' | 'medium' | 'hard';
+
+// Configuration for generating linear equations
+// modify by jx: define configuration interface for linear equation generation
+export interface EquationConfig {
+  difficulty: EquationDifficulty;  // Difficulty level
+  questionCount: number;           // Number of questions to generate (20, 50, or 100)
+}
+
+// Linear equation question model
+// modify by jx: define linear equation question interface
+export interface EquationQuestion {
+  id: string;              // Unique identifier for the question
+  equation: string;        // Equation expression (e.g., "2x + 5 = 13")
+  answer: number;          // The value of x
+  steps?: string[];        // Optional solution steps
+}

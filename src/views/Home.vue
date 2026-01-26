@@ -2,150 +2,33 @@
   <div class="home">
     <!-- Header -->
     <div class="header">
-      <h1 class="title">小学数学四则运算出题工具</h1>
-      <p class="subtitle">快速生成练习题目，支持多种运算模式</p>
+      <h1 class="title">小学数学题目生成工具</h1>
+      <p class="subtitle">快速生成练习题目，支持四则运算和一元一次方程</p>
     </div>
 
-    <!-- Control Panel -->
-    <div class="control-panel-section">
-      <ControlPanel
-        v-model="config"
-        v-model:show-answers="showAnswers"
-      />
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="action-buttons-section">
-      <ActionButtons
-        :is-generating="isGenerating"
-        :is-exporting="isExporting"
-        :questions="questions"
-        :show-answers="showAnswers"
-        @generate="handleGenerate"
-        @export-txt="handleExportTxt"
-        @export-pdf="handleExportPdf"
-        @print="handlePrint"
-      />
-    </div>
-
-    <!-- Question Display -->
-    <div class="question-display-section">
-      <QuestionDisplay
-        :questions="questions"
-        :show-answers="showAnswers"
-      />
+    <!-- Tabs -->
+    <div class="tabs-section">
+      <el-tabs v-model="activeTab" type="card" class="main-tabs">
+        <el-tab-pane label="四则运算" name="arithmetic">
+          <ArithmeticPage />
+        </el-tab-pane>
+        <el-tab-pane label="一元一次方程" name="equation">
+          <EquationPage />
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement home page with control panel, action buttons and question display
+// modify by jx: implement home page with tabs for arithmetic and equation pages
 
 import { ref } from 'vue';
-import { ElMessage } from 'element-plus';
-import ControlPanel from '@/components/ControlPanel.vue';
-import QuestionDisplay from '@/components/QuestionDisplay.vue';
-import ActionButtons from '@/components/ActionButtons.vue';
-import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
-import { useExport } from '@/composables/useExport';
-import type { QuestionConfig } from '@/types';
+import ArithmeticPage from '@/views/ArithmeticPage.vue';
+import EquationPage from '@/views/EquationPage.vue';
 
-// Default configuration
-const defaultConfig: QuestionConfig = {
-  operandCount: 2,
-  minValue: 0,
-  maxValue: 1000,
-  operations: ['add', 'subtract', 'multiply', 'divide'],
-  questionCount: 20
-};
-
-// Reactive state
-const config = ref<QuestionConfig>({ ...defaultConfig });
-const showAnswers = ref(false);
-
-// Use question generator composable
-const { isGenerating, questions, generateQuestions, clearQuestions } = useQuestionGenerator();
-
-// Use export composable
-const { isExporting, exportToTxt, exportToPdf, printQuestions } = useExport();
-
-// Handle generate questions
-const handleGenerate = () => {
-  // Validate operations
-  if (config.value.operations.length === 0) {
-    ElMessage.warning('请至少选择一种运算类型');
-    return;
-  }
-
-  // Validate range
-  if (config.value.minValue >= config.value.maxValue) {
-    ElMessage.warning('最小值必须小于最大值');
-    return;
-  }
-
-  // Clear previous questions
-  clearQuestions();
-
-  // Generate new questions
-  try {
-    const generated = generateQuestions(config.value);
-    
-    if (generated.length === 0) {
-      ElMessage.error('生成题目失败，请调整配置后重试');
-      return;
-    }
-
-    ElMessage.success(`成功生成 ${generated.length} 道题目`);
-  } catch (error) {
-    console.error('Generate questions error:', error);
-    ElMessage.error('生成题目时发生错误');
-  }
-};
-
-// Handle export TXT
-const handleExportTxt = (includeAnswers: boolean) => {
-  if (questions.value.length === 0) {
-    ElMessage.warning('请先生成题目');
-    return;
-  }
-
-  try {
-    exportToTxt(questions.value, includeAnswers);
-  } catch (error) {
-    console.error('Export TXT error:', error);
-    ElMessage.error('导出TXT失败');
-  }
-};
-
-// Handle export PDF
-const handleExportPdf = (includeAnswers: boolean) => {
-  if (questions.value.length === 0) {
-    ElMessage.warning('请先生成题目');
-    return;
-  }
-
-  try {
-    exportToPdf(questions.value, includeAnswers);
-  } catch (error) {
-    console.error('Export PDF error:', error);
-    ElMessage.error('导出PDF失败');
-  }
-};
-
-// Handle print
-const handlePrint = (includeAnswers: boolean) => {
-  if (questions.value.length === 0) {
-    ElMessage.warning('请先生成题目');
-    return;
-  }
-
-  try {
-    printQuestions(questions.value, includeAnswers);
-  } catch (error) {
-    console.error('Print error:', error);
-    ElMessage.error('打印失败');
-  }
-};
+// Active tab state
+const activeTab = ref('arithmetic');
 </script>
 
 <style scoped>
@@ -173,16 +56,12 @@ const handlePrint = (includeAnswers: boolean) => {
   margin: 0;
 }
 
-.control-panel-section {
+.tabs-section {
   margin-bottom: 24px;
 }
 
-.action-buttons-section {
-  margin-bottom: 24px;
-}
-
-.question-display-section {
-  margin-bottom: 24px;
+.main-tabs {
+  background: transparent;
 }
 
 /* Responsive design */
