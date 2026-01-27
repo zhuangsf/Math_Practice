@@ -402,9 +402,25 @@ export function useQuestionGenerator() {
       while (!question && attempts < maxAttempts) {
         attempts++;
         
-        const ops = selectRandomOperations(config.operations, config.operandCount - 1);
+        // modify by jx: support mixed mode to randomly select operand count (2, 3, or 4)
+        let operandCount: 2 | 3 | 4;
+        if (config.operandCount === 'mixed') {
+          // Randomly select 2, 3, or 4 for mixed mode
+          const random = Math.random();
+          if (random < 0.33) {
+            operandCount = 2;
+          } else if (random < 0.67) {
+            operandCount = 3;
+          } else {
+            operandCount = 4;
+          }
+        } else {
+          operandCount = config.operandCount;
+        }
 
-        switch (config.operandCount) {
+        const ops = selectRandomOperations(config.operations, operandCount - 1);
+
+        switch (operandCount) {
           case 2:
             question = generateBinaryQuestion(ops[0], config.minValue, config.maxValue);
             break;
