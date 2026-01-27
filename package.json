@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "小学数学四则运算出题工具",
   "type": "module",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "electron:dev": "electron .",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --dir",
+    "electron:build:win:portable": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable --config.win.sign=null"
   },
   "dependencies": {
     "element-plus": "^2.6.0",
@@ -20,6 +25,8 @@
     "@vitejs/plugin-vue": "^5.0.4",
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.18",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0",
     "happy-dom": "^20.3.9",
     "jsdom": "^27.4.0",
     "postcss": "^8.4.35",
@@ -28,5 +35,44 @@
     "vite": "^5.1.4",
     "vitest": "^4.0.18",
     "vue-tsc": "^2.0.6"
+  },
+  "build": {
+    "appId": "com.mathpractice.app",
+    "productName": "小学数学出题工具",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "forceCodeSigning": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "小学数学出题工具"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.exe"
+    }
   }
 }

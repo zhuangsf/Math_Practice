@@ -6,24 +6,57 @@ import type { Question } from '@/types';
 import jsPDF from 'jspdf';
 
 /**
+ * Check if a question is an equation (contains 'x')
+ * @param question Question object
+ * @returns True if it's an equation
+ */
+function isEquation(question: Question): boolean {
+  return question.expression.includes('x');
+}
+
+/**
  * Format a question for export
  * @param question Question object
  * @param includeAnswers Whether to include the answer
- * @returns Formatted string
+ * @returns Formatted string or array of strings (for equations with multiple lines)
  */
-function formatQuestionForExport(question: Question, includeAnswers: boolean): string {
-  if (includeAnswers) {
-    return `${question.expression} = ${question.answer}`;
+function formatQuestionForExport(question: Question, includeAnswers: boolean): string | string[] {
+  // modify by jx: format equations with x=? on second line, regular questions on single line
+  if (isEquation(question)) {
+    // For equations, return array with two lines: equation expression and x = ?
+    const lines = [question.expression];
+    if (includeAnswers) {
+      lines.push(`x = ${question.answer}`);
+    } else {
+      lines.push('x = ?');
+    }
+    return lines;
+  } else {
+    // For regular questions, return single line
+    if (includeAnswers) {
+      return `${question.expression} = ${question.answer}`;
+    }
+    return `${question.expression} = ?`;
   }
-  return `${question.expression} = ?`;
+}
+
+/**
+ * Check if questions are equations
+ * @param questions Array of questions
+ * @returns True if all questions are equations
+ */
+function areEquations(questions: Question[]): boolean {
+  if (questions.length === 0) return false;
+  return questions.every(q => isEquation(q));
 }
 
 /**
  * Generate filename with timestamp
  * @param extension File extension
+ * @param isEquation Whether it's an equation file
  * @returns Formatted filename
  */
-function generateFilename(extension: string): string {
+function generateFilename(extension: string, isEquation: boolean = false): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -32,7 +65,8 @@ function generateFilename(extension: string): string {
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
   
-  return `四则运算题_${year}${month}${day}_${hours}${minutes}${seconds}.${extension}`;
+  const prefix = isEquation ? '一元一次方程' : '四则运算题';
+  return `${prefix}_${year}${month}${day}_${hours}${minutes}${seconds}.${extension}`;
 }
 
 /**
@@ -53,20 +87,24 @@ export function useExport() {
 
     try {
       const lines: string[] = [];
+      const isEq = areEquations(questions);
       
       // Header
       lines.push('========================================');
-      lines.push('       小学数学四则运算题目');
+      lines.push(isEq ? '       一元一次方程题目' : '       小学数学四则运算题目');
       lines.push('========================================');
       lines.push('');
 
       // Format each question in 4 columns
+      // modify by jx: handle equations with x=? on second line
       const totalQuestions = questions.length;
       const columns = 4;
       const rows = Math.ceil(totalQuestions / columns);
 
       for (let row = 0; row < rows; row++) {
         const rowQuestions: string[] = [];
+        const rowAnswers: string[] = [];
+        let hasEquations = false;
         
         for (let col = 0; col < columns; col++) {
           const index = row + (col * rows);
@@ -74,11 +112,34 @@ export function useExport() {
             const question = questions[index];
             const questionNum = index + 1;
             const formatted = formatQuestionForExport(question, includeAnswers);
-            rowQuestions.push(`${questionNum}. ${formatted}`);
+            
+            if (Array.isArray(formatted)) {
+              // Equation with two lines
+              hasEquations = true;
+              rowQuestions.push(`${questionNum}. ${formatted[0]}`);
+              rowAnswers.push(`   ${formatted[1]}`);
+            } else {
+              // Regular question with single line
+              rowQuestions.push(`${questionNum}. ${formatted}`);
+              rowAnswers.push('');
+            }
+          } else {
+            rowQuestions.push('');
+            rowAnswers.push('');
           }
         }
 
+        // First line: equation expressions or regular questions
         lines.push(rowQuestions.join('    '));
+        // Second line: x = ? or x = answer (only if there are equations)
+        // modify by jx: maintain column alignment for equation answers
+        if (hasEquations) {
+          // Keep empty strings for non-equation columns to maintain alignment
+          const answerLine = rowAnswers.join('    ');
+          if (answerLine.trim()) {
+            lines.push(answerLine);
+          }
+        }
       }
 
       // Footer
@@ -93,7 +154,7 @@ export function useExport() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = generateFilename('txt');
+      link.download = generateFilename('txt', isEq);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -120,11 +181,12 @@ export function useExport() {
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       const availableWidth = pageWidth - (2 * margin);
+      const isEq = areEquations(questions);
 
       // Title
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text('小学数学四则运算题目', pageWidth / 2, 20, { align: 'center' });
+      doc.text(isEq ? '一元一次方程题目' : '小学数学四则运算题目', pageWidth / 2, 20, { align: 'center' });
 
       // Line
       doc.setLineWidth(0.5);
@@ -136,19 +198,22 @@ export function useExport() {
       doc.setFont('helvetica', 'normal');
 
       // Format questions in 4 columns
+      // modify by jx: handle equations with x=? on second line
       const totalQuestions = questions.length;
       const columns = 4;
       const columnWidth = availableWidth / columns;
       const rows = Math.ceil(totalQuestions / columns);
 
       for (let row = 0; row < rows; row++) {
-        void row; // Suppress unused variable warning
         // Check if we need a new page
-        if (y > pageHeight - 20) {
+        if (y > pageHeight - 30) {
           doc.addPage();
           y = 20;
         }
 
+        let hasEquations = false;
+        
+        // First line: equation expressions or regular questions
         for (let col = 0; col < columns; col++) {
           const index = row + (col * rows);
           if (index < totalQuestions) {
@@ -156,15 +221,41 @@ export function useExport() {
             const questionNum = index + 1;
             const formatted = formatQuestionForExport(question, includeAnswers);
             const x = margin + (col * columnWidth);
-            doc.text(`${questionNum}. ${formatted}`, x, y);
+            
+            if (Array.isArray(formatted)) {
+              // Equation: first line is the equation expression
+              hasEquations = true;
+              doc.text(`${questionNum}. ${formatted[0]}`, x, y);
+            } else {
+              // Regular question: single line
+              doc.text(`${questionNum}. ${formatted}`, x, y);
+            }
           }
         }
 
         y += 8;
+
+        // Second line: x = ? or x = answer (only if there are equations)
+        if (hasEquations) {
+          for (let col = 0; col < columns; col++) {
+            const index = row + (col * rows);
+            if (index < totalQuestions) {
+              const question = questions[index];
+              const formatted = formatQuestionForExport(question, includeAnswers);
+              const x = margin + (col * columnWidth);
+              
+              if (Array.isArray(formatted)) {
+                // Equation: second line is x = ? or x = answer
+                doc.text(`   ${formatted[1]}`, x, y);
+              }
+            }
+          }
+          y += 8;
+        }
       }
 
       // Save PDF
-      doc.save(generateFilename('pdf'));
+      doc.save(generateFilename('pdf', isEq));
     } catch (error) {
       console.error('导出PDF失败:', error);
       throw error;
@@ -189,6 +280,7 @@ export function useExport() {
       }
 
       const totalQuestions = questions.length;
+      const isEq = areEquations(questions);
       void 4; // Number of columns
 
       // Build HTML content
@@ -197,7 +289,7 @@ export function useExport() {
         <html>
         <head>
           <meta charset="UTF-8">
-          <title>小学数学四则运算题目</title>
+          <title>${isEq ? '一元一次方程题目' : '小学数学四则运算题目'}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -223,6 +315,13 @@ export function useExport() {
               font-weight: bold;
               margin-right: 5px;
             }
+            .equation-line {
+              margin-bottom: 4px;
+            }
+            .equation-answer-line {
+              margin-left: 20px;
+              margin-bottom: 8px;
+            }
             @media print {
               body {
                 margin: 0;
@@ -245,19 +344,34 @@ export function useExport() {
           </style>
         </head>
         <body>
-          <div class="title">小学数学四则运算题目</div>
+          <div class="title">${isEq ? '一元一次方程题目' : '小学数学四则运算题目'}</div>
           <div class="question-grid">
       `;
 
       // Add questions to grid
+      // modify by jx: handle equations with x=? on second line
       for (let i = 0; i < totalQuestions; i++) {
         const question = questions[i];
         const formatted = formatQuestionForExport(question, includeAnswers);
-        html += `
-          <div class="question">
-            <span class="question-number">${i + 1}.</span>${formatted}
-          </div>
-        `;
+        
+        if (Array.isArray(formatted)) {
+          // Equation with two lines
+          html += `
+            <div class="question">
+              <div class="equation-line">
+                <span class="question-number">${i + 1}.</span>${formatted[0]}
+              </div>
+              <div class="equation-answer-line">${formatted[1]}</div>
+            </div>
+          `;
+        } else {
+          // Regular question with single line
+          html += `
+            <div class="question">
+              <span class="question-number">${i + 1}.</span>${formatted}
+            </div>
+          `;
+        }
       }
 
       html += `

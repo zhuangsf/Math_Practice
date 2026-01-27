@@ -27,6 +27,7 @@ pnpm-debug.log*
 
 # Build outputs
 build/
+release/
 *.local
 
 # Testing

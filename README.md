@@ -34,6 +34,7 @@
 - **Element Plus** - Vue 3 UI组件库
 - **TailwindCSS** - 原子化CSS框架
 - **jsPDF** - PDF生成库
+- **Electron** - 跨平台桌面应用框架
 
 ## 项目结构
 
@@ -64,6 +65,9 @@ Math_Practice/
 │   │   └── EquationPage.vue     # 一元一次方程页面
 │   ├── App.vue                  # 根组件
 │   └── main.ts                  # 应用入口
+├── electron/                    # Electron相关文件
+│   ├── main.js                  # Electron主进程文件
+│   └── package.json             # Electron模块配置
 ├── index.html                   # HTML模板
 ├── package.json                 # 依赖配置
 ├── vite.config.ts               # Vite配置
@@ -99,6 +103,45 @@ npm run build
 ```bash
 npm run preview
 ```
+
+### 5. 打包为 Windows 可执行程序
+
+项目已配置 Electron，可以将 Web 应用打包为 Windows 桌面应用程序，方便分享给好友使用。
+
+#### 5.1 开发模式运行 Electron
+
+```bash
+# 先启动 Vite 开发服务器（在一个终端）
+npm run dev
+
+# 然后启动 Electron（在另一个终端）
+npm run electron:dev
+```
+
+#### 5.2 打包 Windows 可执行程序
+
+```bash
+# 打包 Windows 安装程序和便携版
+npm run electron:build:win
+```
+
+打包完成后，可执行文件将生成在 `release` 目录中：
+
+- **安装程序**：`小学数学出题工具 Setup 1.0.0.exe` - 标准的 Windows 安装程序，可以安装到系统
+- **便携版**：`小学数学出题工具-1.0.0-portable.exe` - 绿色便携版，无需安装，双击即可运行
+
+#### 5.3 分享给好友
+
+打包完成后，可以将 `release` 目录中的可执行文件分享给好友：
+
+1. **推荐使用便携版**：直接发送 `小学数学出题工具-1.0.0-portable.exe` 文件，好友双击即可使用，无需安装
+2. **或使用安装程序**：发送安装程序，好友运行后可以安装到系统，并创建桌面快捷方式
+
+#### 5.4 注意事项
+
+- 首次打包可能需要下载 Electron 二进制文件，请确保网络连接正常
+- 打包后的文件大小约为 100-150MB（包含 Electron 运行时）
+- 便携版和安装程序功能完全相同，只是使用方式不同
 
 ## 使用说明
 

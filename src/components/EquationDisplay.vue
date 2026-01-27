@@ -14,10 +14,14 @@
           :key="equation.id"
           class="equation-item"
         >
-          <span class="equation-number">{{ equation.index }}.</span>
-          <span class="equation-expression">{{ equation.equation }}</span>
-          <span v-if="showAnswers" class="equation-answer">x = {{ equation.answer }}</span>
-          <span v-else class="equation-placeholder">x = ?</span>
+          <div class="equation-row">
+            <span class="equation-number">{{ equation.index }}.</span>
+            <span class="equation-expression">{{ equation.equation }}</span>
+          </div>
+          <div class="equation-row">
+            <span v-if="showAnswers" class="equation-answer">x = {{ equation.answer }}</span>
+            <span v-else class="equation-placeholder">x = ?</span>
+          </div>
         </div>
       </div>
     </div>
@@ -25,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement equation display component with 4-column layout
+// modify by jx: implement equation display component with 4-column layout, x=? always displayed on second line
 
 import { computed } from 'vue';
 import type { EquationQuestion } from '@/types';
@@ -87,8 +91,13 @@ const columns = computed(() => {
   background: #f5f7fa;
   border-radius: 4px;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equation-row {
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
 }
 

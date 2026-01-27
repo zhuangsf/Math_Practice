@@ -13,5 +13,11 @@ export default defineConfig({
   server: {
     port: 3000,
     open: true
+  },
+  // modify by jx: Set base path for production build to work with Electron
+  base: './',
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets'
   }
 })
