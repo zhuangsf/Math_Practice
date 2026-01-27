@@ -130,3 +130,135 @@ export interface AnswerSession {
   score: ScoreResult;       // Score result
   wrongQuestions: WrongQuestion[]; // Wrong questions
 }
+
+// Fraction representation
+// modify by jx: define fraction interface with numerator and denominator
+export interface Fraction {
+  numerator: number;    // Numerator
+  denominator: number;  // Denominator (must be > 0)
+}
+
+// Fraction question model
+// modify by jx: define fraction question interface for fraction operations
+export interface FractionQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;       // Mathematical expression (e.g., "3/5 + 2/5")
+  answer: Fraction;         // The calculated answer as fraction
+  fractions: Fraction[];   // Array of fractions involved in the operation
+  operators: OperationType[]; // Array of operators
+  questionType: 'same-denominator' | 'different-denominator' | 'mixed' | 'simplify'; // Question type
+}
+
+// Configuration for generating fraction questions
+// modify by jx: define configuration interface for fraction question generation
+export interface FractionConfig {
+  denominatorRange: [number, number];  // Denominator range [min, max] (e.g., [2, 20])
+  numeratorRange: [number, number];     // Numerator range [min, max]
+  operations: OperationType[];          // Selected operation types
+  questionCount: number;                 // Number of questions to generate
+  includeMixedNumbers: boolean;         // Whether to include mixed numbers
+  questionTypes: ('same-denominator' | 'different-denominator' | 'mixed' | 'simplify')[]; // Question types
+}
+
+// Decimal question model
+// modify by jx: define decimal question interface for decimal operations
+export interface DecimalQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Mathematical expression (e.g., "3.25 + 2.17")
+  answer: number;          // The calculated answer
+  decimals: number[];      // Array of decimal numbers involved
+  operators: OperationType[]; // Array of operators
+  decimalPlaces: number;  // Number of decimal places for operands
+  answerPrecision: number; // Number of decimal places for answer
+}
+
+// Configuration for generating decimal questions
+// modify by jx: define configuration interface for decimal question generation
+export interface DecimalConfig {
+  decimalPlaces: number;      // Number of decimal places (1, 2, or 3)
+  minValue: number;           // Minimum value
+  maxValue: number;           // Maximum value
+  operations: OperationType[]; // Selected operation types
+  questionCount: number;       // Number of questions to generate
+  answerPrecision: number;    // Answer precision (decimal places)
+}
+
+// Percentage question model
+// modify by jx: define percentage question interface for percentage operations
+export interface PercentageQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression
+  answer: number | string; // Answer (number or percentage string like "75%")
+  questionType: 'decimal-to-percent' | 'percent-to-decimal' | 'fraction-to-percent' | 'percent-to-fraction' | 'find-percent' | 'find-part' | 'find-total';
+  // Question type: conversion or application problem
+}
+
+// Configuration for generating percentage questions
+// modify by jx: define configuration interface for percentage question generation
+export interface PercentageConfig {
+  questionTypes: ('decimal-to-percent' | 'percent-to-decimal' | 'fraction-to-percent' | 'percent-to-fraction' | 'find-percent' | 'find-part' | 'find-total')[];
+  valueRange: [number, number];  // Value range [min, max]
+  questionCount: number;         // Number of questions to generate
+}
+
+// Unit conversion question model
+// modify by jx: define unit conversion question interface
+export interface UnitConversionQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression (e.g., "3米 = ?厘米")
+  answer: number;          // Answer value
+  fromUnit: string;        // Source unit
+  toUnit: string;          // Target unit
+  value: number;           // Original value
+  unitType: 'length' | 'weight' | 'area' | 'volume' | 'time'; // Unit type
+}
+
+// Configuration for generating unit conversion questions
+// modify by jx: define configuration interface for unit conversion question generation
+export interface UnitConversionConfig {
+  unitTypes: ('length' | 'weight' | 'area' | 'volume' | 'time')[]; // Selected unit types
+  conversionDirection: 'large-to-small' | 'small-to-large' | 'mixed'; // Conversion direction
+  valueRange: [number, number];  // Value range
+  questionCount: number;         // Number of questions to generate
+}
+
+// Geometry question model
+// modify by jx: define geometry question interface for geometry calculations
+export interface GeometryQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression (e.g., "长方形长5cm，宽3cm，求周长")
+  answer: number;          // Calculated answer
+  shape: 'rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube'; // Shape type
+  calculationType: 'perimeter' | 'area' | 'volume'; // Calculation type
+  parameters: Record<string, number>; // Shape parameters (length, width, radius, etc.)
+}
+
+// Configuration for generating geometry questions
+// modify by jx: define configuration interface for geometry question generation
+export interface GeometryConfig {
+  shapes: ('rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube')[]; // Selected shapes
+  calculationTypes: ('perimeter' | 'area' | 'volume')[]; // Selected calculation types
+  parameterRange: [number, number];  // Parameter range (e.g., [1, 100] cm)
+  questionCount: number;             // Number of questions to generate
+  piValue: number;                    // π value (3.14 or 3.14159)
+}
+
+// Factor and multiple question model
+// modify by jx: define factor and multiple question interface
+export interface FactorMultipleQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression
+  answer: number | number[]; // Answer (single number or array of numbers)
+  questionType: 'find-multiples' | 'find-factors' | 'gcd' | 'lcm'; // Question type
+  numbers: number[];       // Numbers involved in the question
+}
+
+// Configuration for generating factor and multiple questions
+// modify by jx: define configuration interface for factor and multiple question generation
+export interface FactorMultipleConfig {
+  questionTypes: ('find-multiples' | 'find-factors' | 'gcd' | 'lcm')[];
+  valueRange: [number, number];  // Value range [min, max]
+  questionCount: number;         // Number of questions to generate
+  multipleCount?: number;        // Number of multiples to find
+  factorCount?: number;          // Number of factors to find
+}

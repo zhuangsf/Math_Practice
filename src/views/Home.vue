@@ -15,6 +15,12 @@
         <el-tab-pane label="一元一次方程" name="equation">
           <EquationPage />
         </el-tab-pane>
+        <el-tab-pane label="分数运算" name="fraction">
+          <FractionPage />
+        </el-tab-pane>
+        <el-tab-pane label="小数运算" name="decimal">
+          <DecimalPage />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -26,6 +32,8 @@
 import { ref } from 'vue';
 import ArithmeticPage from '@/views/ArithmeticPage.vue';
 import EquationPage from '@/views/EquationPage.vue';
+import FractionPage from '@/views/FractionPage.vue';
+import DecimalPage from '@/views/DecimalPage.vue';
 
 // Active tab state
 const activeTab = ref('arithmetic');
