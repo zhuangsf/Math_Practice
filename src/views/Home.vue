@@ -21,6 +21,18 @@
         <el-tab-pane label="小数运算" name="decimal">
           <DecimalPage />
         </el-tab-pane>
+        <el-tab-pane label="百分数" name="percentage">
+          <PercentagePage />
+        </el-tab-pane>
+        <el-tab-pane label="单位换算" name="unit-conversion">
+          <UnitConversionPage />
+        </el-tab-pane>
+        <el-tab-pane label="几何计算" name="geometry">
+          <GeometryPage />
+        </el-tab-pane>
+        <el-tab-pane label="倍数与因数" name="factor-multiple">
+          <FactorMultiplePage />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -34,6 +46,10 @@ import ArithmeticPage from '@/views/ArithmeticPage.vue';
 import EquationPage from '@/views/EquationPage.vue';
 import FractionPage from '@/views/FractionPage.vue';
 import DecimalPage from '@/views/DecimalPage.vue';
+import PercentagePage from '@/views/PercentagePage.vue';
+import UnitConversionPage from '@/views/UnitConversionPage.vue';
+import GeometryPage from '@/views/GeometryPage.vue';
+import FactorMultiplePage from '@/views/FactorMultiplePage.vue';
 
 // Active tab state
 const activeTab = ref('arithmetic');

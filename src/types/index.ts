@@ -109,6 +109,61 @@ export interface WrongQuestionStats {
   total: number;
 }
 
+// Fraction wrong question record
+// modify by jx: define fraction wrong question interface for fraction operations
+export interface FractionWrongQuestion {
+  questionId: string;           // Question ID
+  question: FractionQuestion;   // Question information
+  studentAnswer: string;          // Student's answer (fraction string)
+  correctAnswer: Fraction;       // Correct answer (fraction)
+  operationType: OperationType;  // Operation type
+  questionType: 'same-denominator' | 'different-denominator' | 'mixed' | 'simplify'; // Question type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Fraction wrong question statistics
+// modify by jx: define fraction wrong question statistics interface for analysis
+export interface FractionWrongQuestionStats {
+  byOperationType: {
+    add: number;
+    subtract: number;
+    multiply: number;
+    divide: number;
+  };
+  byQuestionType: {
+    'same-denominator': number;
+    'different-denominator': number;
+    'mixed': number;
+    'simplify': number;
+  };
+  total: number;
+}
+
+// Decimal wrong question record
+// modify by jx: define decimal wrong question interface for decimal operations
+export interface DecimalWrongQuestion {
+  questionId: string;           // Question ID
+  question: DecimalQuestion;    // Question information
+  studentAnswer: number;         // Student's answer
+  correctAnswer: number;         // Correct answer
+  operationType: OperationType;  // Operation type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Decimal wrong question statistics
+// modify by jx: define decimal wrong question statistics interface for analysis
+export interface DecimalWrongQuestionStats {
+  byOperationType: {
+    add: number;
+    subtract: number;
+    multiply: number;
+    divide: number;
+  };
+  total: number;
+}
+
 // Tutoring plan recommendation
 // modify by jx: define tutoring plan interface with recommendations
 export interface TutoringPlan {
@@ -118,6 +173,27 @@ export interface TutoringPlan {
   };
   suggestions: string[];              // Learning suggestions
   recommendedConfig?: Partial<QuestionConfig>; // Recommended practice configuration
+}
+
+// Fraction tutoring plan recommendation
+// modify by jx: define fraction tutoring plan interface for fraction operations
+export interface FractionTutoringPlan {
+  weakAreas: {
+    operationTypes: OperationType[];  // Weak operation types
+    questionTypes: ('same-denominator' | 'different-denominator' | 'mixed' | 'simplify')[]; // Weak question types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<FractionConfig>; // Recommended practice configuration
+}
+
+// Decimal tutoring plan recommendation
+// modify by jx: define decimal tutoring plan interface for decimal operations
+export interface DecimalTutoringPlan {
+  weakAreas: {
+    operationTypes: OperationType[];  // Weak operation types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<DecimalConfig>; // Recommended practice configuration
 }
 
 // Answer session record
@@ -261,4 +337,153 @@ export interface FactorMultipleConfig {
   questionCount: number;         // Number of questions to generate
   multipleCount?: number;        // Number of multiples to find
   factorCount?: number;          // Number of factors to find
+}
+
+// Percentage wrong question record
+// modify by jx: define percentage wrong question interface for percentage operations
+export interface PercentageWrongQuestion {
+  questionId: string;           // Question ID
+  question: PercentageQuestion;  // Question information
+  studentAnswer: string | number; // Student's answer
+  correctAnswer: number | string; // Correct answer
+  questionType: 'decimal-to-percent' | 'percent-to-decimal' | 'fraction-to-percent' | 'percent-to-fraction' | 'find-percent' | 'find-part' | 'find-total'; // Question type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Percentage wrong question statistics
+// modify by jx: define percentage wrong question statistics interface for analysis
+export interface PercentageWrongQuestionStats {
+  byQuestionType: {
+    'decimal-to-percent': number;
+    'percent-to-decimal': number;
+    'fraction-to-percent': number;
+    'percent-to-fraction': number;
+    'find-percent': number;
+    'find-part': number;
+    'find-total': number;
+  };
+  total: number;
+}
+
+// Percentage tutoring plan recommendation
+// modify by jx: define percentage tutoring plan interface for percentage operations
+export interface PercentageTutoringPlan {
+  weakAreas: {
+    questionTypes: ('decimal-to-percent' | 'percent-to-decimal' | 'fraction-to-percent' | 'percent-to-fraction' | 'find-percent' | 'find-part' | 'find-total')[]; // Weak question types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<PercentageConfig>; // Recommended practice configuration
+}
+
+// Unit conversion wrong question record
+// modify by jx: define unit conversion wrong question interface
+export interface UnitConversionWrongQuestion {
+  questionId: string;           // Question ID
+  question: UnitConversionQuestion; // Question information
+  studentAnswer: number;         // Student's answer
+  correctAnswer: number;         // Correct answer
+  unitType: 'length' | 'weight' | 'area' | 'volume' | 'time'; // Unit type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Unit conversion wrong question statistics
+// modify by jx: define unit conversion wrong question statistics interface for analysis
+export interface UnitConversionWrongQuestionStats {
+  byUnitType: {
+    length: number;
+    weight: number;
+    area: number;
+    volume: number;
+    time: number;
+  };
+  total: number;
+}
+
+// Unit conversion tutoring plan recommendation
+// modify by jx: define unit conversion tutoring plan interface
+export interface UnitConversionTutoringPlan {
+  weakAreas: {
+    unitTypes: ('length' | 'weight' | 'area' | 'volume' | 'time')[]; // Weak unit types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<UnitConversionConfig>; // Recommended practice configuration
+}
+
+// Geometry wrong question record
+// modify by jx: define geometry wrong question interface for geometry calculations
+export interface GeometryWrongQuestion {
+  questionId: string;           // Question ID
+  question: GeometryQuestion;    // Question information
+  studentAnswer: number;         // Student's answer
+  correctAnswer: number;         // Correct answer
+  shape: 'rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube'; // Shape type
+  calculationType: 'perimeter' | 'area' | 'volume'; // Calculation type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Geometry wrong question statistics
+// modify by jx: define geometry wrong question statistics interface for analysis
+export interface GeometryWrongQuestionStats {
+  byShape: {
+    rectangle: number;
+    square: number;
+    triangle: number;
+    circle: number;
+    cuboid: number;
+    cube: number;
+  };
+  byCalculationType: {
+    perimeter: number;
+    area: number;
+    volume: number;
+  };
+  total: number;
+}
+
+// Geometry tutoring plan recommendation
+// modify by jx: define geometry tutoring plan interface for geometry calculations
+export interface GeometryTutoringPlan {
+  weakAreas: {
+    shapes: ('rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube')[]; // Weak shapes
+    calculationTypes: ('perimeter' | 'area' | 'volume')[]; // Weak calculation types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<GeometryConfig>; // Recommended practice configuration
+}
+
+// Factor multiple wrong question record
+// modify by jx: define factor multiple wrong question interface
+export interface FactorMultipleWrongQuestion {
+  questionId: string;           // Question ID
+  question: FactorMultipleQuestion; // Question information
+  studentAnswer: string | number | number[]; // Student's answer
+  correctAnswer: number | number[]; // Correct answer
+  questionType: 'find-multiples' | 'find-factors' | 'gcd' | 'lcm'; // Question type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Factor multiple wrong question statistics
+// modify by jx: define factor multiple wrong question statistics interface for analysis
+export interface FactorMultipleWrongQuestionStats {
+  byQuestionType: {
+    'find-multiples': number;
+    'find-factors': number;
+    'gcd': number;
+    'lcm': number;
+  };
+  total: number;
+}
+
+// Factor multiple tutoring plan recommendation
+// modify by jx: define factor multiple tutoring plan interface
+export interface FactorMultipleTutoringPlan {
+  weakAreas: {
+    questionTypes: ('find-multiples' | 'find-factors' | 'gcd' | 'lcm')[]; // Weak question types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<FactorMultipleConfig>; // Recommended practice configuration
 }

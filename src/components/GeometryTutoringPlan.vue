@@ -1,0 +1,209 @@
+<template>
+  <div v-if="plan" class="tutoring-plan">
+    <div class="plan-card">
+      <div class="plan-header">
+        <h3 class="plan-title">个性化辅导计划</h3>
+      </div>
+      
+      <div class="plan-content">
+        <!-- Suggestions -->
+        <div v-if="plan.suggestions.length > 0" class="suggestions-section">
+          <h4 class="section-title">学习建议</h4>
+          <ul class="suggestions-list">
+            <li v-for="(suggestion, index) in plan.suggestions" :key="index" class="suggestion-item">
+              <span class="suggestion-icon">💡</span>
+              <span class="suggestion-text">{{ suggestion }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Recommended Configuration -->
+        <div v-if="plan.recommendedConfig" class="recommendation-section">
+          <h4 class="section-title">推荐练习配置</h4>
+          <div class="recommended-config">
+            <div v-if="plan.recommendedConfig.shapes" class="config-item">
+              <span class="config-label">图形类型：</span>
+              <span class="config-value">
+                {{ formatShapes(plan.recommendedConfig.shapes) }}
+              </span>
+            </div>
+            <div v-if="plan.recommendedConfig.calculationTypes" class="config-item">
+              <span class="config-label">计算类型：</span>
+              <span class="config-value">
+                {{ formatCalculationTypes(plan.recommendedConfig.calculationTypes) }}
+              </span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">题目数量：</span>
+              <span class="config-value">{{ plan.recommendedConfig.questionCount || 20 }}题</span>
+            </div>
+          </div>
+          <el-button
+            type="primary"
+            size="default"
+            @click="emit('apply-recommended-config', plan.recommendedConfig)"
+          >
+            应用推荐配置
+          </el-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+// modify by jx: implement geometry tutoring plan component showing personalized learning suggestions
+
+import type { GeometryTutoringPlan } from '@/types';
+
+// Define props
+defineProps<{
+  plan: GeometryTutoringPlan | null;
+}>();
+
+// Define emits
+const emit = defineEmits<{
+  (e: 'apply-recommended-config', config: Partial<any>): void;
+}>();
+
+// Format shapes array to display string
+const formatShapes = (shapes: ('rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube')[]): string => {
+  const nameMap: Record<string, string> = {
+    'rectangle': '长方形',
+    'square': '正方形',
+    'triangle': '三角形',
+    'circle': '圆形',
+    'cuboid': '长方体',
+    'cube': '正方体'
+  };
+  return shapes.map(shape => nameMap[shape] || shape).join('、');
+};
+
+// Format calculation types array to display string
+const formatCalculationTypes = (types: ('perimeter' | 'area' | 'volume')[]): string => {
+  const nameMap: Record<string, string> = {
+    'perimeter': '周长',
+    'area': '面积',
+    'volume': '体积'
+  };
+  return types.map(type => nameMap[type] || type).join('、');
+};
+</script>
+
+<style scoped>
+.tutoring-plan {
+  margin-bottom: 24px;
+}
+
+.plan-card {
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.plan-header {
+  margin-bottom: 20px;
+}
+
+.plan-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.plan-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.suggestions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.suggestions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: #f0f9ff;
+  border-radius: 4px;
+  border-left: 3px solid #409eff;
+}
+
+.suggestion-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.suggestion-text {
+  font-size: 14px;
+  color: #606266;
+  line-height: 1.6;
+}
+
+.recommendation-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.recommended-config {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.config-label {
+  font-size: 14px;
+  color: #606266;
+  min-width: 100px;
+}
+
+.config-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .config-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .config-label {
+    min-width: auto;
+  }
+}
+</style>

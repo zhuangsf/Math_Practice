@@ -1,14 +1,14 @@
 <template>
-  <div class="fraction-page">
+  <div class="unit-conversion-page">
     <!-- Header -->
     <div class="header">
-      <h2 class="title">分数运算题目生成</h2>
-      <p class="subtitle">支持分数加减乘除、分数化简等练习</p>
+      <h2 class="title">单位换算题目生成</h2>
+      <p class="subtitle">支持长度、重量、面积、体积、时间单位换算</p>
     </div>
 
     <!-- Control Panel -->
     <div class="control-panel-section">
-      <FractionControlPanel
+      <UnitConversionControlPanel
         v-model="config"
         v-model:show-answers="showAnswers"
         v-model:answer-mode="answerMode"
@@ -55,7 +55,7 @@
 
     <!-- Wrong Question Analysis -->
     <div v-if="wrongQuestionStats && isSubmitted" class="analysis-section">
-      <FractionWrongQuestionAnalysis
+      <UnitConversionWrongQuestionAnalysis
         :stats="wrongQuestionStats"
         :wrong-questions="wrongQuestions"
         @view-wrong-questions="handleViewWrongQuestions"
@@ -64,7 +64,7 @@
 
     <!-- Tutoring Plan -->
     <div v-if="tutoringPlan && isSubmitted" class="tutoring-plan-section">
-      <FractionTutoringPlan
+      <UnitConversionTutoringPlan
         :plan="tutoringPlan"
         @apply-recommended-config="handleApplyRecommendedConfig"
       />
@@ -72,7 +72,7 @@
 
     <!-- Question Display -->
     <div class="question-display-section">
-      <FractionDisplay
+      <UnitConversionDisplay
         :questions="questions"
         :show-answers="showAnswers"
         :answer-mode="answerMode"
@@ -85,40 +85,38 @@
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement fraction page with control panel, action buttons, question display, answering and scoring
+// modify by jx: implement unit conversion page with control panel, action buttons, question display, answering and scoring
 
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import FractionControlPanel from '@/components/FractionControlPanel.vue';
-import FractionDisplay from '@/components/FractionDisplay.vue';
+import UnitConversionControlPanel from '@/components/UnitConversionControlPanel.vue';
+import UnitConversionDisplay from '@/components/UnitConversionDisplay.vue';
 import ActionButtons from '@/components/ActionButtons.vue';
 import ScoreDisplay from '@/components/ScoreDisplay.vue';
-import FractionWrongQuestionAnalysis from '@/components/FractionWrongQuestionAnalysis.vue';
-import FractionTutoringPlan from '@/components/FractionTutoringPlan.vue';
-import { useFractionGenerator } from '@/composables/useFractionGenerator';
-import { parseFraction, fractionsEqual } from '@/utils/fractionUtils';
+import UnitConversionWrongQuestionAnalysis from '@/components/UnitConversionWrongQuestionAnalysis.vue';
+import UnitConversionTutoringPlan from '@/components/UnitConversionTutoringPlan.vue';
+import { useUnitConversionGenerator } from '@/composables/useUnitConversionGenerator';
+import { validateUnitConversionAnswer } from '@/utils/unitConversionUtils';
 import { calculateScore } from '@/composables/useScoring';
-import { extractFractionWrongQuestions, calculateFractionWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
-import { generateFractionTutoringPlan } from '@/composables/useTutoringPlan';
-import type { FractionConfig, AnswerStatus, ScoreResult, FractionWrongQuestion, FractionWrongQuestionStats, FractionTutoringPlan as FractionTutoringPlanType } from '@/types';
+import { extractUnitConversionWrongQuestions, calculateUnitConversionWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
+import { generateUnitConversionTutoringPlan } from '@/composables/useTutoringPlan';
+import type { UnitConversionConfig, AnswerStatus, ScoreResult, UnitConversionWrongQuestion, UnitConversionWrongQuestionStats, UnitConversionTutoringPlan as UnitConversionTutoringPlanType } from '@/types';
 
 // Default configuration
-const defaultConfig: FractionConfig = {
-  denominatorRange: [2, 10],
-  numeratorRange: [1, 9],
-  operations: ['add', 'subtract', 'multiply', 'divide'],
-  questionCount: 20,
-  includeMixedNumbers: false,
-  questionTypes: ['same-denominator', 'different-denominator']
+const defaultConfig: UnitConversionConfig = {
+  unitTypes: ['length', 'weight', 'area', 'volume', 'time'],
+  conversionDirection: 'mixed',
+  valueRange: [1, 100],
+  questionCount: 20
 };
 
 // Reactive state
-const config = ref<FractionConfig>({ ...defaultConfig });
+const config = ref<UnitConversionConfig>({ ...defaultConfig });
 const showAnswers = ref(false);
 const answerMode = ref<'practice' | 'answering'>('practice');
 
-// Use fraction generator composable
-const { isGenerating, questions, generate, clear } = useFractionGenerator();
+// Use unit conversion generator composable
+const { isGenerating, questions, generate, clear } = useUnitConversionGenerator();
 
 // Export state
 const isExporting = ref(false);
@@ -126,17 +124,17 @@ const isExporting = ref(false);
 // Answering state
 const isSubmitted = ref(false);
 const startTime = ref<Date | null>(null);
-const studentAnswers = ref<Map<string, { answer: string | null; status: AnswerStatus }>>(new Map());
+const studentAnswers = ref<Map<string, { answer: number | null; status: AnswerStatus }>>(new Map());
 
 // Score result
 const score = ref<ScoreResult | null>(null);
 
 // Wrong questions and statistics
-const wrongQuestions = ref<FractionWrongQuestion[]>([]);
-const wrongQuestionStats = ref<FractionWrongQuestionStats | null>(null);
+const wrongQuestions = ref<UnitConversionWrongQuestion[]>([]);
+const wrongQuestionStats = ref<UnitConversionWrongQuestionStats | null>(null);
 
 // Tutoring plan
-const tutoringPlan = ref<FractionTutoringPlanType | null>(null);
+const tutoringPlan = ref<UnitConversionTutoringPlanType | null>(null);
 
 // Initialize answers when questions are generated
 watch(questions, (newQuestions) => {
@@ -164,8 +162,6 @@ watch(answerMode, (newMode) => {
     isSubmitted.value = false;
     startTime.value = new Date();
     score.value = null;
-    wrongQuestions.value = [];
-    wrongQuestionStats.value = null;
   } else if (newMode === 'practice') {
     studentAnswers.value.clear();
     isSubmitted.value = false;
@@ -173,10 +169,11 @@ watch(answerMode, (newMode) => {
     score.value = null;
     wrongQuestions.value = [];
     wrongQuestionStats.value = null;
+    tutoringPlan.value = null;
   }
 });
 
-// Student answers map for FractionDisplay component
+// Student answers map for UnitConversionDisplay component
 const studentAnswersMap = computed(() => {
   return studentAnswers.value;
 });
@@ -184,32 +181,21 @@ const studentAnswersMap = computed(() => {
 // Check if all questions are answered
 const isAllAnswered = computed(() => {
   return Array.from(studentAnswers.value.values()).every(
-    answer => answer.answer !== null && answer.answer.trim() !== ''
+    answer => answer.answer !== null && answer.answer !== undefined
   );
 });
 
 // Handle generate questions
 const handleGenerate = () => {
-  // Validate operations
-  if (config.value.operations.length === 0) {
-    ElMessage.warning('请至少选择一种运算类型');
+  // Validate unit types
+  if (config.value.unitTypes.length === 0) {
+    ElMessage.warning('请至少选择一种单位类型');
     return;
   }
 
-  // Validate question types
-  if (config.value.questionTypes.length === 0) {
-    ElMessage.warning('请至少选择一种题目类型');
-    return;
-  }
-
-  // Validate ranges
-  if (config.value.denominatorRange[0] >= config.value.denominatorRange[1]) {
-    ElMessage.warning('分母最小值必须小于最大值');
-    return;
-  }
-
-  if (config.value.numeratorRange[0] >= config.value.numeratorRange[1]) {
-    ElMessage.warning('分子最小值必须小于最大值');
+  // Validate range
+  if (config.value.valueRange[0] >= config.value.valueRange[1]) {
+    ElMessage.warning('最小值必须小于最大值');
     return;
   }
 
@@ -228,14 +214,14 @@ const handleGenerate = () => {
 };
 
 // Handle answer change
-const handleAnswerChange = (questionId: string, answer: string | null) => {
+const handleAnswerChange = (questionId: string, answer: number | null) => {
   const question = questions.value.find(q => q.id === questionId);
   if (!question) return;
 
   const currentAnswer = studentAnswers.value.get(questionId);
   if (currentAnswer) {
     currentAnswer.answer = answer;
-    if (answer && answer.trim()) {
+    if (answer !== null && answer !== undefined) {
       currentAnswer.status = 'answered';
     } else {
       currentAnswer.status = 'unanswered';
@@ -253,16 +239,11 @@ const handleSubmitAnswers = () => {
   // Validate and check answers
   questions.value.forEach(question => {
     const studentAnswer = studentAnswers.value.get(question.id);
-    if (!studentAnswer || !studentAnswer.answer) return;
+    if (!studentAnswer || studentAnswer.answer === null || studentAnswer.answer === undefined) return;
 
-    try {
-      const parsedAnswer = parseFraction(studentAnswer.answer);
-      if (fractionsEqual(parsedAnswer, question.answer)) {
-        studentAnswer.status = 'correct';
-      } else {
-        studentAnswer.status = 'wrong';
-      }
-    } catch (error) {
+    if (validateUnitConversionAnswer(studentAnswer.answer, question.answer)) {
+      studentAnswer.status = 'correct';
+    } else {
       studentAnswer.status = 'wrong';
     }
   });
@@ -275,10 +256,9 @@ const handleSubmitAnswers = () => {
     : 0;
 
   // Convert answers to StudentAnswer format for scoring
-  // modify by jx: set answer to null for fraction questions since StudentAnswer expects number | null
   const studentAnswersArray = Array.from(studentAnswers.value.entries()).map(([questionId, answer]) => ({
     questionId,
-    answer: null, // Fraction answers are strings, but StudentAnswer expects number | null
+    answer: answer.answer || null,
     status: answer.status as AnswerStatus
   }));
 
@@ -286,14 +266,14 @@ const handleSubmitAnswers = () => {
   score.value = calculateScore(studentAnswersArray, elapsedTime);
 
   // Extract wrong questions
-  wrongQuestions.value = extractFractionWrongQuestions(questions.value, studentAnswers.value);
+  wrongQuestions.value = extractUnitConversionWrongQuestions(questions.value, studentAnswers.value);
   
   // Calculate wrong question statistics
   if (wrongQuestions.value.length > 0) {
-    wrongQuestionStats.value = calculateFractionWrongQuestionStats(wrongQuestions.value);
+    wrongQuestionStats.value = calculateUnitConversionWrongQuestionStats(wrongQuestions.value);
     
     // Generate tutoring plan
-    tutoringPlan.value = generateFractionTutoringPlan(
+    tutoringPlan.value = generateUnitConversionTutoringPlan(
       wrongQuestionStats.value,
       questions.value.length
     );
@@ -326,12 +306,9 @@ const handleViewWrongQuestions = () => {
 };
 
 // Handle apply recommended config
-const handleApplyRecommendedConfig = (recommendedConfig: Partial<FractionConfig>) => {
-  if (recommendedConfig.operations) {
-    config.value.operations = recommendedConfig.operations;
-  }
-  if (recommendedConfig.questionTypes) {
-    config.value.questionTypes = recommendedConfig.questionTypes;
+const handleApplyRecommendedConfig = (recommendedConfig: Partial<UnitConversionConfig>) => {
+  if (recommendedConfig.unitTypes) {
+    config.value.unitTypes = recommendedConfig.unitTypes;
   }
   if (recommendedConfig.questionCount) {
     config.value.questionCount = recommendedConfig.questionCount;
@@ -354,7 +331,7 @@ const handlePrint = () => {
 </script>
 
 <style scoped>
-.fraction-page {
+.unit-conversion-page {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;

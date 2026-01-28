@@ -239,7 +239,8 @@ describe('fractionUtils', () => {
       const fraction = generateRandomFraction([1, 10], [2, 10]);
       expect(fraction.numerator).toBeGreaterThanOrEqual(1);
       expect(fraction.numerator).toBeLessThanOrEqual(10);
-      expect(fraction.denominator).toBeGreaterThanOrEqual(2);
+      // modify by jx: denominator can be 1 after simplification (integer result)
+      expect(fraction.denominator).toBeGreaterThanOrEqual(1);
       expect(fraction.denominator).toBeLessThanOrEqual(10);
       expect(fraction.denominator).not.toBe(0);
     });
