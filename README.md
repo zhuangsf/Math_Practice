@@ -1,6 +1,6 @@
 # 小学数学题目生成工具
 
-一个为小学生设计的自动数学题目生成工具，支持四则运算、一元一次方程、分数运算、小数运算、因数与倍数、几何图形、百分数和单位换算题目生成。
+一个为小学生设计的自动数学题目生成工具，支持四则运算、一元一次方程、分数运算、小数运算、因数与倍数、几何图形、百分数、单位换算、质数与合数、比较大小和找规律题目生成。
 
 ## 功能特性
 
@@ -23,6 +23,7 @@
   - **复杂**：a(x + b) = cx + d 形式（带括号，两边都有未知数）
 - ✅ **题目数量选择**：支持20、50、100题三种选项
 - ✅ **答案显示控制**：可选择是否显示答案
+- ✅ **导出功能**：支持导出TXT、PDF和打印功能
 
 ### 分数运算功能
 - ✅ **多种运算类型**：支持分数加法、减法、乘法、除法（可多选）
@@ -92,8 +93,38 @@
 - ✅ **错题分析**：自动统计错题，按单位类型和转换方向分类
 - ✅ **个性化辅导计划**：根据错题情况生成学习建议和推荐练习配置
 
+### 质数与合数功能
+- ✅ **多种题目类型**：判断质数、判断合数、质因数分解
+- ✅ **灵活的数值范围**：可自定义数字范围（1-200）
+- ✅ **题目数量选择**：支持20、50、100题三种选项
+- ✅ **答案显示控制**：可选择是否显示答案
+- ✅ **答题模式**：支持在线答题功能，可以输入答案并自动评分
+- ✅ **评分系统**：自动计算得分、正确率、等级和答题时间统计
+- ✅ **错题分析**：自动统计错题，按题目类型和难度级别分类
+- ✅ **个性化辅导计划**：根据错题情况生成学习建议和推荐练习配置
+
+### 比较大小功能
+- ✅ **多种数字类型**：整数比较、小数比较、分数比较
+- ✅ **灵活的数值范围**：可自定义数字范围
+- ✅ **题目数量选择**：支持20、50、100题三种选项
+- ✅ **答案显示控制**：可选择是否显示答案
+- ✅ **答题模式**：支持在线答题功能，可以输入答案并自动评分
+- ✅ **评分系统**：自动计算得分、正确率、等级和答题时间统计
+- ✅ **错题分析**：自动统计错题，按数字类型和难度级别分类
+- ✅ **个性化辅导计划**：根据错题情况生成学习建议和推荐练习配置
+
+### 找规律功能
+- ✅ **多种规律类型**：等差数列、等比数列、斐波那契数列、平方数列
+- ✅ **灵活的数值范围**：可自定义数字范围
+- ✅ **题目数量选择**：支持20、50、100题三种选项
+- ✅ **答案显示控制**：可选择是否显示答案
+- ✅ **答题模式**：支持在线答题功能，可以输入答案并自动评分
+- ✅ **评分系统**：自动计算得分、正确率、等级和答题时间统计
+- ✅ **错题分析**：自动统计错题，按规律类型和难度级别分类
+- ✅ **个性化辅导计划**：根据错题情况生成学习建议和推荐练习配置
+
 ### 通用功能
-- ✅ **页签切换**：支持在四则运算、一元一次方程、分数运算、小数运算、因数与倍数、几何图形、百分数和单位换算之间切换
+- ✅ **页签切换**：支持在四则运算、一元一次方程、分数运算、小数运算、因数与倍数、几何图形、百分数、单位换算、质数与合数、比较大小和找规律之间切换
 - ✅ **多格式导出**：支持导出TXT和PDF文件
 - ✅ **打印功能**：直接打印题目
 - ✅ **4列布局**：题目以4列网格显示，适合打印
@@ -125,6 +156,9 @@ Math_Practice/
 │   │   ├── GeometryControlPanel.vue  # 几何图形控制面板
 │   │   ├── PercentageControlPanel.vue  # 百分数控制面板
 │   │   ├── UnitConversionControlPanel.vue  # 单位换算控制面板
+│   │   ├── PrimeCompositeControlPanel.vue  # 质数合数控制面板
+│   │   ├── ComparisonControlPanel.vue  # 比较大小控制面板
+│   │   ├── PatternControlPanel.vue  # 找规律控制面板
 │   │   ├── QuestionDisplay.vue  # 四则运算题目显示
 │   │   ├── EquationDisplay.vue  # 方程题目显示
 │   │   ├── FractionDisplay.vue  # 分数题目显示
@@ -133,10 +167,13 @@ Math_Practice/
 │   │   ├── GeometryDisplay.vue  # 几何图形题目显示
 │   │   ├── PercentageDisplay.vue  # 百分数题目显示
 │   │   ├── UnitConversionDisplay.vue  # 单位换算题目显示
+│   │   ├── PrimeCompositeDisplay.vue  # 质数合数题目显示
+│   │   ├── ComparisonDisplay.vue  # 比较大小题目显示
+│   │   ├── PatternDisplay.vue  # 找规律题目显示
 │   │   ├── ActionButtons.vue    # 操作按钮
 │   │   ├── ScoreDisplay.vue     # 评分结果显示
-│   │   ├── TutoringPlan.vue     # 个性化辅导计划
-│   │   ├── WrongQuestionAnalysis.vue  # 错题分析
+│   │   ├── TutoringPlan.vue     # 通用辅导计划
+│   │   ├── WrongQuestionAnalysis.vue  # 通用错题分析
 │   │   ├── FractionTutoringPlan.vue  # 分数辅导计划
 │   │   ├── FractionWrongQuestionAnalysis.vue  # 分数错题分析
 │   │   ├── DecimalTutoringPlan.vue  # 小数辅导计划
@@ -148,7 +185,13 @@ Math_Practice/
 │   │   ├── PercentageTutoringPlan.vue  # 百分数辅导计划
 │   │   ├── PercentageWrongQuestionAnalysis.vue  # 百分数错题分析
 │   │   ├── UnitConversionTutoringPlan.vue  # 单位换算辅导计划
-│   │   └── UnitConversionWrongQuestionAnalysis.vue  # 单位换算错题分析
+│   │   ├── UnitConversionWrongQuestionAnalysis.vue  # 单位换算错题分析
+│   │   ├── PrimeCompositeTutoringPlan.vue  # 质数合数辅导计划
+│   │   ├── PrimeCompositeWrongQuestionAnalysis.vue  # 质数合数错题分析
+│   │   ├── ComparisonTutoringPlan.vue  # 比较大小辅导计划
+│   │   ├── ComparisonWrongQuestionAnalysis.vue  # 比较大小错题分析
+│   │   ├── PatternTutoringPlan.vue  # 找规律辅导计划
+│   │   └── PatternWrongQuestionAnalysis.vue  # 找规律错题分析
 │   ├── composables/             # 组合式函数
 │   │   ├── useQuestionGenerator.ts  # 四则运算题目生成逻辑
 │   │   ├── useEquationGenerator.ts  # 一元一次方程生成逻辑
@@ -158,6 +201,9 @@ Math_Practice/
 │   │   ├── useGeometryGenerator.ts  # 几何图形生成逻辑
 │   │   ├── usePercentageGenerator.ts  # 百分数生成逻辑
 │   │   ├── useUnitConversionGenerator.ts  # 单位换算生成逻辑
+│   │   ├── usePrimeCompositeGenerator.ts  # 质数合数生成逻辑
+│   │   ├── useComparisonGenerator.ts  # 比较大小生成逻辑
+│   │   ├── usePatternGenerator.ts  # 找规律生成逻辑
 │   │   ├── useExport.ts              # 导出功能
 │   │   ├── useAnswering.ts          # 答题功能
 │   │   ├── useScoring.ts            # 评分功能
@@ -171,6 +217,9 @@ Math_Practice/
 │   │   ├── geometryUtils.ts    # 几何图形工具
 │   │   ├── percentageUtils.ts  # 百分数工具
 │   │   ├── unitConversionUtils.ts  # 单位换算工具
+│   │   ├── primeCompositeUtils.ts  # 质数合数工具
+│   │   ├── comparisonUtils.ts  # 比较大小工具
+│   │   ├── patternUtils.ts     # 找规律工具
 │   │   ├── validationUtils.ts   # 验证工具
 │   │   └── numberUtils.ts       # 数字生成
 │   ├── types/                   # TypeScript类型定义
@@ -183,7 +232,10 @@ Math_Practice/
 │   │   ├── FactorMultiplePage.vue  # 因数倍数页面
 │   │   ├── GeometryPage.vue     # 几何图形页面
 │   │   ├── PercentagePage.vue   # 百分数页面
-│   │   └── UnitConversionPage.vue  # 单位换算页面
+│   │   ├── UnitConversionPage.vue  # 单位换算页面
+│   │   ├── PrimeCompositePage.vue  # 质数合数页面
+│   │   ├── ComparisonPage.vue   # 比较大小页面
+│   │   └── PatternPage.vue      # 找规律页面
 │   ├── App.vue                  # 根组件
 │   └── main.ts                  # 应用入口
 ├── electron/                    # Electron相关文件
@@ -451,6 +503,57 @@ dist/
 10. **查看辅导计划**：根据错题情况获得个性化学习建议
 11. **导出或打印**：选择导出TXT、导出PDF或直接打印
 
+### 质数与合数
+1. 切换到"质数与合数"页签
+2. **选择题目类型**：选择判断质数、判断合数或质因数分解
+3. **设置数值范围**：调整数字范围（1-200）
+4. **选择题目数量**：选择20、50或100题
+5. **选择答题模式**：
+   - **查看模式**：勾选"显示答案"可在生成时显示答案
+   - **答题模式**：选择"答题模式"可在线答题并自动评分
+6. **点击"生成题目"按钮**：生成题目
+7. **查看或答题**：
+   - 查看模式：题目将以4列布局显示
+   - 答题模式：判断题选择"质数"或"合数"按钮，质因数分解题输入答案，完成后点击"提交答案"
+8. **查看评分结果**：答题模式下提交后显示得分、等级和统计信息
+9. **查看错题分析**：自动统计错题，按题目类型和难度分类
+10. **查看辅导计划**：根据错题情况获得个性化学习建议
+11. **导出或打印**：选择导出TXT、导出PDF或直接打印
+
+### 比较大小
+1. 切换到"比较大小"页签
+2. **选择数字类型**：选择整数、小数或分数比较
+3. **设置数值范围**：调整数字范围
+4. **选择题目数量**：选择20、50或100题
+5. **选择答题模式**：
+   - **查看模式**：勾选"显示答案"可在生成时显示答案
+   - **答题模式**：选择"答题模式"可在线答题并自动评分
+6. **点击"生成题目"按钮**：生成题目
+7. **查看或答题**：
+   - 查看模式：题目将以4列布局显示
+   - 答题模式：点击"<"、">"或"="符号选择答案，完成后点击"提交答案"
+8. **查看评分结果**：答题模式下提交后显示得分、等级和统计信息
+9. **查看错题分析**：自动统计错题，按数字类型和难度分类
+10. **查看辅导计划**：根据错题情况获得个性化学习建议
+11. **导出或打印**：选择导出TXT、导出PDF或直接打印
+
+### 找规律
+1. 切换到"找规律"页签
+2. **选择规律类型**：选择等差数列、等比数列、斐波那契数列或平方数列
+3. **设置数值范围**：调整数字范围
+4. **选择题目数量**：选择20、50或100题
+5. **选择答题模式**：
+   - **查看模式**：勾选"显示答案"可在生成时显示答案
+   - **答题模式**：选择"答题模式"可在线答题并自动评分
+6. **点击"生成题目"按钮**：生成题目
+7. **查看或答题**：
+   - 查看模式：题目将以4列布局显示
+   - 答题模式：输入框中填写空缺位置的数字，完成后点击"提交答案"
+8. **查看评分结果**：答题模式下提交后显示得分、等级和统计信息
+9. **查看错题分析**：自动统计错题，按规律类型和难度分类
+10. **查看辅导计划**：根据错题情况获得个性化学习建议
+11. **导出或打印**：选择导出TXT、导出PDF或直接打印
+
 ## 核心功能说明
 
 ### 运算约束
@@ -498,6 +601,12 @@ dist/
 - `PercentageConfig`: 百分数生成配置
 - `UnitConversionQuestion`: 单位换算题目对象
 - `UnitConversionConfig`: 单位换算生成配置
+- `PrimeCompositeQuestion`: 质数合数题目对象
+- `PrimeCompositeConfig`: 质数合数生成配置
+- `ComparisonQuestion`: 比较大小题目对象
+- `ComparisonConfig`: 比较大小生成配置
+- `PatternQuestion`: 找规律题目对象
+- `PatternConfig`: 找规律生成配置
 
 ### 组合式函数
 
@@ -509,6 +618,9 @@ dist/
 - `useGeometryGenerator`: 几何图形生成逻辑
 - `usePercentageGenerator`: 百分数生成逻辑
 - `useUnitConversionGenerator`: 单位换算生成逻辑
+- `usePrimeCompositeGenerator`: 质数合数生成逻辑
+- `useComparisonGenerator`: 比较大小生成逻辑
+- `usePatternGenerator`: 找规律生成逻辑
 - `useExport`: 导出功能（TXT、PDF、打印）
 - `useAnswering`: 答题功能
 - `useScoring`: 评分功能
@@ -533,11 +645,20 @@ Created with ❤️ for elementary school math practice.
 ---
 
 **版本**: 1.0.0
-**更新日期**: 2026-01-28
+**更新日期**: 2026-01-29
 
 ## 更新日志
 
-### 2026-01-28 (最新)
+### 2026-01-29 (最新)
+- ✅ 新增质数与合数功能，支持判断质数、判断合数和质因数分解
+- ✅ 新增比较大小功能，支持整数、小数和分数的比较
+- ✅ 新增找规律功能，支持等差数列、等比数列、斐波那契数列和平方数列
+- ✅ 为所有新增功能模块添加答题模式、评分系统、错题分析和个性化辅导计划
+- ✅ 扩展导出功能支持所有11种题型
+- ✅ 扩展类型定义，支持所有新增功能模块
+- ✅ 扩展组合式函数，支持所有新增功能模块
+
+### 2026-01-28
 - ✅ 新增因数与倍数功能，支持找因数、找倍数、最大公因数、最小公倍数
 - ✅ 新增几何图形功能，支持长方形、正方形、三角形、平行四边形、梯形、圆形的周长和面积计算
 - ✅ 新增百分数功能，支持百分数与小数互化、百分数与分数互化、求百分数、求比值的百分数

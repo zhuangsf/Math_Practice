@@ -96,6 +96,7 @@ import ScoreDisplay from '@/components/ScoreDisplay.vue';
 import PrimeCompositeWrongQuestionAnalysis from '@/components/PrimeCompositeWrongQuestionAnalysis.vue';
 import PrimeCompositeTutoringPlan from '@/components/PrimeCompositeTutoringPlan.vue';
 import { usePrimeCompositeGenerator } from '@/composables/usePrimeCompositeGenerator';
+import { useExport } from '@/composables/useExport';
 import { validatePrimeCompositeAnswer, parsePrimeFactorsAnswer } from '@/utils/primeCompositeUtils';
 import { calculateScore } from '@/composables/useScoring';
 import { extractPrimeCompositeWrongQuestions, calculatePrimeCompositeWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
@@ -117,8 +118,8 @@ const answerMode = ref<'practice' | 'answering'>('practice');
 // Use prime composite generator composable
 const { isGenerating, questions, generate, clear } = usePrimeCompositeGenerator();
 
-// Export state
-const isExporting = ref(false);
+// Use export composable
+const { isExporting, exportPrimeCompositeToTxt, exportPrimeCompositeToPdf, printPrimeComposite } = useExport();
 
 // Answering state
 const isSubmitted = ref(false);
@@ -354,17 +355,49 @@ const handleApplyRecommendedConfig = (recommendedConfig: Partial<PrimeCompositeC
   ElMessage.success('已应用推荐配置，请重新生成题目');
 };
 
-// Handle export (simplified - will need proper implementation)
-const handleExportTxt = () => {
-  ElMessage.info('导出功能开发中...');
+// Handle export TXT
+const handleExportTxt = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportPrimeCompositeToTxt(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export TXT error:', error);
+    ElMessage.error('导出TXT失败');
+  }
 };
 
-const handleExportPdf = () => {
-  ElMessage.info('导出功能开发中...');
+// Handle export PDF
+const handleExportPdf = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportPrimeCompositeToPdf(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export PDF error:', error);
+    ElMessage.error('导出PDF失败');
+  }
 };
 
-const handlePrint = () => {
-  ElMessage.info('打印功能开发中...');
+// Handle print
+const handlePrint = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    printPrimeComposite(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Print error:', error);
+    ElMessage.error('打印失败');
+  }
 };
 </script>
 

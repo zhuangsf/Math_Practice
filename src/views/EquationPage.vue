@@ -64,7 +64,7 @@ const showAnswers = ref(false);
 const { isGenerating, equations, generateEquations, clearEquations } = useEquationGenerator();
 
 // Use export composable
-const { isExporting, exportToTxt, exportToPdf, printQuestions } = useExport();
+const { isExporting, exportEquationsToTxt, exportEquationsToPdf, printEquations } = useExport();
 
 // Convert equations to questions format for export
 const equationsAsQuestions = computed<Question[]>(() => {
@@ -106,7 +106,7 @@ const handleExportTxt = (includeAnswers: boolean) => {
   }
 
   try {
-    exportToTxt(equationsAsQuestions.value, includeAnswers);
+    exportEquationsToTxt(equationsAsQuestions.value, includeAnswers);
   } catch (error) {
     console.error('Export TXT error:', error);
     ElMessage.error('导出TXT失败');
@@ -121,7 +121,7 @@ const handleExportPdf = (includeAnswers: boolean) => {
   }
 
   try {
-    exportToPdf(equationsAsQuestions.value, includeAnswers);
+    exportEquationsToPdf(equationsAsQuestions.value, includeAnswers);
   } catch (error) {
     console.error('Export PDF error:', error);
     ElMessage.error('导出PDF失败');
@@ -136,7 +136,7 @@ const handlePrint = (includeAnswers: boolean) => {
   }
 
   try {
-    printQuestions(equationsAsQuestions.value, includeAnswers);
+    printEquations(equationsAsQuestions.value, includeAnswers);
   } catch (error) {
     console.error('Print error:', error);
     ElMessage.error('打印失败');

@@ -96,6 +96,7 @@ import ScoreDisplay from '@/components/ScoreDisplay.vue';
 import DecimalWrongQuestionAnalysis from '@/components/DecimalWrongQuestionAnalysis.vue';
 import DecimalTutoringPlan from '@/components/DecimalTutoringPlan.vue';
 import { useDecimalGenerator } from '@/composables/useDecimalGenerator';
+import { useExport } from '@/composables/useExport';
 import { validateDecimalAnswer } from '@/utils/decimalUtils';
 import { calculateScore } from '@/composables/useScoring';
 import { extractDecimalWrongQuestions, calculateDecimalWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
@@ -120,8 +121,8 @@ const answerMode = ref<'practice' | 'answering'>('practice');
 // Use decimal generator composable
 const { isGenerating, questions, generate, clear } = useDecimalGenerator();
 
-// Export state
-const isExporting = ref(false);
+// Use export composable
+const { isExporting, exportDecimalsToTxt, exportDecimalsToPdf, printDecimals } = useExport();
 
 // Answering state
 const isSubmitted = ref(false);
@@ -321,17 +322,49 @@ const handleApplyRecommendedConfig = (recommendedConfig: Partial<DecimalConfig>)
   ElMessage.success('已应用推荐配置，请重新生成题目');
 };
 
-// Handle export (simplified - will need proper implementation)
-const handleExportTxt = () => {
-  ElMessage.info('导出功能开发中...');
+// Handle export TXT
+const handleExportTxt = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportDecimalsToTxt(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export TXT error:', error);
+    ElMessage.error('导出TXT失败');
+  }
 };
 
-const handleExportPdf = () => {
-  ElMessage.info('导出功能开发中...');
+// Handle export PDF
+const handleExportPdf = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportDecimalsToPdf(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export PDF error:', error);
+    ElMessage.error('导出PDF失败');
+  }
 };
 
-const handlePrint = () => {
-  ElMessage.info('打印功能开发中...');
+// Handle print
+const handlePrint = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    printDecimals(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Print error:', error);
+    ElMessage.error('打印失败');
+  }
 };
 </script>
 

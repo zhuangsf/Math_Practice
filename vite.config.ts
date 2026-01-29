@@ -12,7 +12,9 @@ export default defineConfig({
   },
   server: {
     port: 3000,
-    open: true
+    open: true,
+    // modify by jx: enable LAN access by binding to all network interfaces
+    host: '0.0.0.0'
   },
   // modify by jx: Set base path for production build to work with Electron and static file access
   base: './',

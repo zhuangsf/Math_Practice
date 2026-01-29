@@ -1,62 +1,29 @@
 // Composable for export functionality (TXT, PDF, Print)
-// modify by jx: implement export functions for questions to TXT, PDF and print
+// modify by jx: implement export functions for all question types to TXT, PDF and print
 
 import { ref } from 'vue';
-import type { Question } from '@/types';
 import jsPDF from 'jspdf';
-
-/**
- * Check if a question is an equation (contains 'x')
- * @param question Question object
- * @returns True if it's an equation
- */
-function isEquation(question: Question): boolean {
-  return question.expression.includes('x');
-}
-
-/**
- * Format a question for export
- * @param question Question object
- * @param includeAnswers Whether to include the answer
- * @returns Formatted string or array of strings (for equations with multiple lines)
- */
-function formatQuestionForExport(question: Question, includeAnswers: boolean): string | string[] {
-  // modify by jx: format equations with x=? on second line, regular questions on single line
-  if (isEquation(question)) {
-    // For equations, return array with two lines: equation expression and x = ?
-    const lines = [question.expression];
-    if (includeAnswers) {
-      lines.push(`x = ${question.answer}`);
-    } else {
-      lines.push('x = ?');
-    }
-    return lines;
-  } else {
-    // For regular questions, return single line
-    if (includeAnswers) {
-      return `${question.expression} = ${question.answer}`;
-    }
-    return `${question.expression} = ?`;
-  }
-}
-
-/**
- * Check if questions are equations
- * @param questions Array of questions
- * @returns True if all questions are equations
- */
-function areEquations(questions: Question[]): boolean {
-  if (questions.length === 0) return false;
-  return questions.every(q => isEquation(q));
-}
+import type {
+  Question,
+  EquationQuestion,
+  FractionQuestion,
+  DecimalQuestion,
+  GeometryQuestion,
+  PercentageQuestion,
+  UnitConversionQuestion,
+  FactorMultipleQuestion,
+  ComparisonQuestion,
+  PatternQuestion,
+  PrimeCompositeQuestion
+} from '@/types';
 
 /**
  * Generate filename with timestamp
  * @param extension File extension
- * @param isEquation Whether it's an equation file
+ * @param title Title for the file
  * @returns Formatted filename
  */
-function generateFilename(extension: string, isEquation: boolean = false): string {
+function generateFilename(extension: string, title: string): string {
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -64,82 +31,184 @@ function generateFilename(extension: string, isEquation: boolean = false): strin
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
   const seconds = String(now.getSeconds()).padStart(2, '0');
-  
-  const prefix = isEquation ? '一元一次方程' : '四则运算题';
-  return `${prefix}_${year}${month}${day}_${hours}${minutes}${seconds}.${extension}`;
+
+  return `${title}_${year}${month}${day}_${hours}${minutes}${seconds}.${extension}`;
+}
+
+/**
+ * Convert various question types to a unified format for export
+ */
+interface UnifiedQuestion {
+  id: string;
+  expression: string;
+  answer: string | number;
+  questionNumber: number;
+}
+
+function unifyQuestion(question: EquationQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.equation,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyFractionQuestion(question: FractionQuestion, index: number): UnifiedQuestion {
+  let answerStr: string;
+  const ans = question.answer;
+  if (typeof ans === 'object' && ans !== null && 'numerator' in ans && 'denominator' in ans) {
+    answerStr = `${ans.numerator}/${ans.denominator}`;
+  } else {
+    answerStr = String(ans);
+  }
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: answerStr,
+    questionNumber: index + 1
+  };
+}
+
+function unifyDecimalQuestion(question: DecimalQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyGeometryQuestion(question: GeometryQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyPercentageQuestion(question: PercentageQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyUnitConversionQuestion(question: UnitConversionQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyFactorMultipleQuestion(question: FactorMultipleQuestion, index: number): UnifiedQuestion {
+  let answerStr: string;
+  if (Array.isArray(question.answer)) {
+    answerStr = question.answer.join(', ');
+  } else {
+    answerStr = String(question.answer);
+  }
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: answerStr,
+    questionNumber: index + 1
+  };
+}
+
+function unifyComparisonQuestion(question: ComparisonQuestion, index: number): UnifiedQuestion {
+  let answerStr: string;
+  if (question.answer === -1) {
+    answerStr = '<';
+  } else if (question.answer === 0) {
+    answerStr = '=';
+  } else {
+    answerStr = '>';
+  }
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: answerStr,
+    questionNumber: index + 1
+  };
+}
+
+function unifyPatternQuestion(question: PatternQuestion, index: number): UnifiedQuestion {
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: question.answer,
+    questionNumber: index + 1
+  };
+}
+
+function unifyPrimeCompositeQuestion(question: PrimeCompositeQuestion, index: number): UnifiedQuestion {
+  let answerStr: string;
+  if (typeof question.answer === 'boolean') {
+    answerStr = question.answer ? '是' : '否';
+  } else if (Array.isArray(question.answer)) {
+    answerStr = question.answer.join(' × ');
+  } else {
+    answerStr = String(question.answer);
+  }
+  return {
+    id: question.id,
+    expression: question.expression,
+    answer: answerStr,
+    questionNumber: index + 1
+  };
 }
 
 /**
  * Export questions to TXT file
- * @param questions Array of questions
- * @param includeAnswers Whether to include answers
  */
 export function useExport() {
   const isExporting = ref(false);
 
   /**
-   * Export questions to TXT file
-   * @param questions Array of questions to export
-   * @param includeAnswers Whether to include answers
+   * Export Equation questions to TXT file
    */
-  const exportToTxt = (questions: Question[], includeAnswers: boolean) => {
+  const exportEquationsToTxt = (questions: EquationQuestion[], includeAnswers: boolean, title: string = '一元一次方程题目') => {
     isExporting.value = true;
 
     try {
       const lines: string[] = [];
-      const isEq = areEquations(questions);
-      
+      const unifiedQuestions = questions.map((q, i) => unifyQuestion(q, i));
+
       // Header
       lines.push('========================================');
-      lines.push(isEq ? '       一元一次方程题目' : '       小学数学四则运算题目');
+      lines.push(`       ${title}`);
       lines.push('========================================');
       lines.push('');
 
       // Format each question in 4 columns
-      // modify by jx: handle equations with x=? on second line
-      const totalQuestions = questions.length;
+      const totalQuestions = unifiedQuestions.length;
       const columns = 4;
       const rows = Math.ceil(totalQuestions / columns);
 
       for (let row = 0; row < rows; row++) {
         const rowQuestions: string[] = [];
-        const rowAnswers: string[] = [];
-        let hasEquations = false;
-        
+
         for (let col = 0; col < columns; col++) {
           const index = row + (col * rows);
           if (index < totalQuestions) {
-            const question = questions[index];
-            const questionNum = index + 1;
-            const formatted = formatQuestionForExport(question, includeAnswers);
-            
-            if (Array.isArray(formatted)) {
-              // Equation with two lines
-              hasEquations = true;
-              rowQuestions.push(`${questionNum}. ${formatted[0]}`);
-              rowAnswers.push(`   ${formatted[1]}`);
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
             } else {
-              // Regular question with single line
-              rowQuestions.push(`${questionNum}. ${formatted}`);
-              rowAnswers.push('');
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
             }
           } else {
             rowQuestions.push('');
-            rowAnswers.push('');
           }
         }
 
-        // First line: equation expressions or regular questions
         lines.push(rowQuestions.join('    '));
-        // Second line: x = ? or x = answer (only if there are equations)
-        // modify by jx: maintain column alignment for equation answers
-        if (hasEquations) {
-          // Keep empty strings for non-equation columns to maintain alignment
-          const answerLine = rowAnswers.join('    ');
-          if (answerLine.trim()) {
-            lines.push(answerLine);
-          }
-        }
       }
 
       // Footer
@@ -154,7 +223,601 @@ export function useExport() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = generateFilename('txt', isEq);
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Fraction questions to TXT file
+   */
+  const exportFractionsToTxt = (questions: FractionQuestion[], includeAnswers: boolean, title: string = '分数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyFractionQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Decimal questions to TXT file
+   */
+  const exportDecimalsToTxt = (questions: DecimalQuestion[], includeAnswers: boolean, title: string = '小数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyDecimalQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Geometry questions to TXT file
+   */
+  const exportGeometryToTxt = (questions: GeometryQuestion[], includeAnswers: boolean, title: string = '几何计算题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyGeometryQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Percentage questions to TXT file
+   */
+  const exportPercentageToTxt = (questions: PercentageQuestion[], includeAnswers: boolean, title: string = '百分数题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyPercentageQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Unit Conversion questions to TXT file
+   */
+  const exportUnitConversionToTxt = (questions: UnitConversionQuestion[], includeAnswers: boolean, title: string = '单位换算题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyUnitConversionQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Factor Multiple questions to TXT file
+   */
+  const exportFactorMultipleToTxt = (questions: FactorMultipleQuestion[], includeAnswers: boolean, title: string = '倍数与因数题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyFactorMultipleQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Comparison questions to TXT file
+   */
+  const exportComparisonToTxt = (questions: ComparisonQuestion[], includeAnswers: boolean, title: string = '比较大小题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyComparisonQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} (${question.answer})`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} (?)`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Pattern questions to TXT file
+   */
+  const exportPatternToTxt = (questions: PatternQuestion[], includeAnswers: boolean, title: string = '找规律题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyPatternQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export Prime Composite questions to TXT file
+   */
+  const exportPrimeCompositeToTxt = (questions: PrimeCompositeQuestion[], includeAnswers: boolean, title: string = '质数与合数题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyPrimeCompositeQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -169,10 +832,8 @@ export function useExport() {
 
   /**
    * Export questions to PDF file
-   * @param questions Array of questions to export
-   * @param includeAnswers Whether to include answers
    */
-  const exportToPdf = (questions: Question[], includeAnswers: boolean) => {
+  const exportEquationsToPdf = (questions: EquationQuestion[], includeAnswers: boolean, title: string = '一元一次方程题目') => {
     isExporting.value = true;
 
     try {
@@ -181,12 +842,11 @@ export function useExport() {
       const pageHeight = doc.internal.pageSize.getHeight();
       const margin = 20;
       const availableWidth = pageWidth - (2 * margin);
-      const isEq = areEquations(questions);
 
       // Title
       doc.setFontSize(18);
       doc.setFont('helvetica', 'bold');
-      doc.text(isEq ? '一元一次方程题目' : '小学数学四则运算题目', pageWidth / 2, 20, { align: 'center' });
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
 
       // Line
       doc.setLineWidth(0.5);
@@ -197,9 +857,8 @@ export function useExport() {
       doc.setFontSize(fontSize);
       doc.setFont('helvetica', 'normal');
 
-      // Format questions in 4 columns
-      // modify by jx: handle equations with x=? on second line
-      const totalQuestions = questions.length;
+      const unifiedQuestions = questions.map((q, i) => unifyQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
       const columns = 4;
       const columnWidth = availableWidth / columns;
       const rows = Math.ceil(totalQuestions / columns);
@@ -211,51 +870,567 @@ export function useExport() {
           y = 20;
         }
 
-        let hasEquations = false;
-        
-        // First line: equation expressions or regular questions
         for (let col = 0; col < columns; col++) {
           const index = row + (col * rows);
           if (index < totalQuestions) {
-            const question = questions[index];
-            const questionNum = index + 1;
-            const formatted = formatQuestionForExport(question, includeAnswers);
+            const question = unifiedQuestions[index];
             const x = margin + (col * columnWidth);
-            
-            if (Array.isArray(formatted)) {
-              // Equation: first line is the equation expression
-              hasEquations = true;
-              doc.text(`${questionNum}. ${formatted[0]}`, x, y);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
             } else {
-              // Regular question: single line
-              doc.text(`${questionNum}. ${formatted}`, x, y);
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
             }
           }
         }
 
         y += 8;
-
-        // Second line: x = ? or x = answer (only if there are equations)
-        if (hasEquations) {
-          for (let col = 0; col < columns; col++) {
-            const index = row + (col * rows);
-            if (index < totalQuestions) {
-              const question = questions[index];
-              const formatted = formatQuestionForExport(question, includeAnswers);
-              const x = margin + (col * columnWidth);
-              
-              if (Array.isArray(formatted)) {
-                // Equation: second line is x = ? or x = answer
-                doc.text(`   ${formatted[1]}`, x, y);
-              }
-            }
-          }
-          y += 8;
-        }
       }
 
       // Save PDF
-      doc.save(generateFilename('pdf', isEq));
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportFractionsToPdf = (questions: FractionQuestion[], includeAnswers: boolean, title: string = '分数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      // Line
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyFractionQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportDecimalsToPdf = (questions: DecimalQuestion[], includeAnswers: boolean, title: string = '小数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyDecimalQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportGeometryToPdf = (questions: GeometryQuestion[], includeAnswers: boolean, title: string = '几何计算题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyGeometryQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportPercentageToPdf = (questions: PercentageQuestion[], includeAnswers: boolean, title: string = '百分数题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyPercentageQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportUnitConversionToPdf = (questions: UnitConversionQuestion[], includeAnswers: boolean, title: string = '单位换算题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyUnitConversionQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportFactorMultipleToPdf = (questions: FactorMultipleQuestion[], includeAnswers: boolean, title: string = '倍数与因数题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyFactorMultipleQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportComparisonToPdf = (questions: ComparisonQuestion[], includeAnswers: boolean, title: string = '比较大小题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyComparisonQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} (${question.answer})`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} (?)`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportPatternToPdf = (questions: PatternQuestion[], includeAnswers: boolean, title: string = '找规律题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyPatternQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const exportPrimeCompositeToPdf = (questions: PrimeCompositeQuestion[], includeAnswers: boolean, title: string = '质数与合数题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyPrimeCompositeQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      doc.save(generateFilename('pdf', title));
     } catch (error) {
       console.error('导出PDF失败:', error);
       throw error;
@@ -266,22 +1441,17 @@ export function useExport() {
 
   /**
    * Print questions
-   * @param questions Array of questions to print
-   * @param includeAnswers Whether to include answers
    */
-  const printQuestions = (questions: Question[], includeAnswers: boolean) => {
+  const printEquations = (questions: EquationQuestion[], includeAnswers: boolean, title: string = '一元一次方程题目') => {
     isExporting.value = true;
 
     try {
-      // Create a new window for printing
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         throw new Error('无法打开打印窗口');
       }
 
-      const totalQuestions = questions.length;
-      const isEq = areEquations(questions);
-      void 4; // Number of columns
+      const unifiedQuestions = questions.map((q, i) => unifyQuestion(q, i));
 
       // Build HTML content
       let html = `
@@ -289,7 +1459,7 @@ export function useExport() {
         <html>
         <head>
           <meta charset="UTF-8">
-          <title>${isEq ? '一元一次方程题目' : '小学数学四则运算题目'}</title>
+          <title>${title}</title>
           <style>
             body {
               font-family: Arial, sans-serif;
@@ -315,12 +1485,111 @@ export function useExport() {
               font-weight: bold;
               margin-right: 5px;
             }
-            .equation-line {
-              margin-bottom: 4px;
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
             }
-            .equation-answer-line {
-              margin-left: 20px;
-              margin-bottom: 8px;
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      // Add questions to grid
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printFractions = (questions: FractionQuestion[], includeAnswers: boolean, title: string = '分数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyFractionQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
             }
             @media print {
               body {
@@ -344,31 +1613,1116 @@ export function useExport() {
           </style>
         </head>
         <body>
-          <div class="title">${isEq ? '一元一次方程题目' : '小学数学四则运算题目'}</div>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printDecimals = (questions: DecimalQuestion[], includeAnswers: boolean, title: string = '小数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyDecimalQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printGeometry = (questions: GeometryQuestion[], includeAnswers: boolean, title: string = '几何计算题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyGeometryQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printPercentage = (questions: PercentageQuestion[], includeAnswers: boolean, title: string = '百分数题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyPercentageQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printUnitConversion = (questions: UnitConversionQuestion[], includeAnswers: boolean, title: string = '单位换算题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyUnitConversionQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printFactorMultiple = (questions: FactorMultipleQuestion[], includeAnswers: boolean, title: string = '倍数与因数题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyFactorMultipleQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printComparison = (questions: ComparisonQuestion[], includeAnswers: boolean, title: string = '比较大小题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyComparisonQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} (${question.answer})
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} (?)
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printPattern = (questions: PatternQuestion[], includeAnswers: boolean, title: string = '找规律题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyPatternQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  const printPrimeComposite = (questions: PrimeCompositeQuestion[], includeAnswers: boolean, title: string = '质数与合数题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyPrimeCompositeQuestion(q, i));
+
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
+          <div class="question-grid">
+      `;
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="question">
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
+            </div>
+          `;
+        }
+      }
+
+      html += `
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Convert Question to unified format
+   */
+  function unifyArithmeticQuestion(question: Question, index: number): UnifiedQuestion {
+    return {
+      id: question.id,
+      expression: question.expression,
+      answer: question.answer,
+      questionNumber: index + 1
+    };
+  }
+
+  /**
+   * Export arithmetic questions to TXT file
+   */
+  const exportToTxt = (questions: Question[], includeAnswers: boolean, title: string = '四则运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const lines: string[] = [];
+      const unifiedQuestions = questions.map((q, i) => unifyArithmeticQuestion(q, i));
+
+      // Header
+      lines.push('========================================');
+      lines.push(`       ${title}`);
+      lines.push('========================================');
+      lines.push('');
+
+      // Format each question in 4 columns
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        const rowQuestions: string[] = [];
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            if (includeAnswers) {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ${question.answer}`);
+            } else {
+              rowQuestions.push(`${question.questionNumber}. ${question.expression} = ?`);
+            }
+          } else {
+            rowQuestions.push('');
+          }
+        }
+
+        lines.push(rowQuestions.join('    '));
+      }
+
+      // Footer
+      lines.push('');
+      lines.push('========================================');
+      lines.push(`   共 ${totalQuestions} 题`);
+      lines.push('========================================');
+
+      // Create blob and download
+      const content = lines.join('\n');
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = generateFilename('txt', title);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('导出TXT失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export arithmetic questions to PDF file
+   */
+  const exportToPdf = (questions: Question[], includeAnswers: boolean, title: string = '四则运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const availableWidth = pageWidth - (2 * margin);
+
+      // Title
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(title, pageWidth / 2, 20, { align: 'center' });
+
+      // Line
+      doc.setLineWidth(0.5);
+      doc.line(margin, 25, pageWidth - margin, 25);
+
+      let y = 35;
+      const fontSize = 10;
+      doc.setFontSize(fontSize);
+      doc.setFont('helvetica', 'normal');
+
+      const unifiedQuestions = questions.map((q, i) => unifyArithmeticQuestion(q, i));
+      const totalQuestions = unifiedQuestions.length;
+      const columns = 4;
+      const columnWidth = availableWidth / columns;
+      const rows = Math.ceil(totalQuestions / columns);
+
+      for (let row = 0; row < rows; row++) {
+        // Check if we need a new page
+        if (y > pageHeight - 30) {
+          doc.addPage();
+          y = 20;
+        }
+
+        for (let col = 0; col < columns; col++) {
+          const index = row + (col * rows);
+          if (index < totalQuestions) {
+            const question = unifiedQuestions[index];
+            const x = margin + (col * columnWidth);
+
+            if (includeAnswers) {
+              doc.text(`${question.questionNumber}. ${question.expression} = ${question.answer}`, x, y);
+            } else {
+              doc.text(`${question.questionNumber}. ${question.expression} = ?`, x, y);
+            }
+          }
+        }
+
+        y += 8;
+      }
+
+      // Save PDF
+      doc.save(generateFilename('pdf', title));
+    } catch (error) {
+      console.error('导出PDF失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Print arithmetic questions
+   */
+  const printQuestions = (questions: Question[], includeAnswers: boolean, title: string = '四则运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('无法打开打印窗口');
+      }
+
+      const unifiedQuestions = questions.map((q, i) => unifyArithmeticQuestion(q, i));
+
+      // Build HTML content
+      let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 20px;
+              margin: 0;
+            }
+            .title {
+              text-align: center;
+              font-size: 24px;
+              font-weight: bold;
+              margin-bottom: 20px;
+            }
+            .question-grid {
+              display: grid;
+              grid-template-columns: repeat(4, 1fr);
+              gap: 20px;
+              margin-bottom: 30px;
+            }
+            .question {
+              font-size: 14px;
+            }
+            .question-number {
+              font-weight: bold;
+              margin-right: 5px;
+            }
+            @media print {
+              body {
+                margin: 0;
+                padding: 10px;
+              }
+              .question-grid {
+                gap: 10px;
+              }
+            }
+            @media (max-width: 768px) {
+              .question-grid {
+                grid-template-columns: repeat(2, 1fr);
+              }
+            }
+            @media (max-width: 480px) {
+              .question-grid {
+                grid-template-columns: 1fr;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="title">${title}</div>
           <div class="question-grid">
       `;
 
       // Add questions to grid
-      // modify by jx: handle equations with x=? on second line
-      for (let i = 0; i < totalQuestions; i++) {
-        const question = questions[i];
-        const formatted = formatQuestionForExport(question, includeAnswers);
-        
-        if (Array.isArray(formatted)) {
-          // Equation with two lines
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
           html += `
             <div class="question">
-              <div class="equation-line">
-                <span class="question-number">${i + 1}.</span>${formatted[0]}
-              </div>
-              <div class="equation-answer-line">${formatted[1]}</div>
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ${question.answer}
             </div>
           `;
         } else {
-          // Regular question with single line
           html += `
             <div class="question">
-              <span class="question-number">${i + 1}.</span>${formatted}
+              <span class="question-number">${question.questionNumber}.</span>${question.expression} = ?
             </div>
           `;
         }
@@ -397,8 +2751,49 @@ export function useExport() {
 
   return {
     isExporting,
+    // Arithmetic exports (original functions)
     exportToTxt,
     exportToPdf,
-    printQuestions
+    printQuestions,
+    // Equation exports
+    exportEquationsToTxt,
+    exportEquationsToPdf,
+    printEquations,
+    // Fraction exports
+    exportFractionsToTxt,
+    exportFractionsToPdf,
+    printFractions,
+    // Decimal exports
+    exportDecimalsToTxt,
+    exportDecimalsToPdf,
+    printDecimals,
+    // Geometry exports
+    exportGeometryToTxt,
+    exportGeometryToPdf,
+    printGeometry,
+    // Percentage exports
+    exportPercentageToTxt,
+    exportPercentageToPdf,
+    printPercentage,
+    // Unit conversion exports
+    exportUnitConversionToTxt,
+    exportUnitConversionToPdf,
+    printUnitConversion,
+    // Factor multiple exports
+    exportFactorMultipleToTxt,
+    exportFactorMultipleToPdf,
+    printFactorMultiple,
+    // Comparison exports
+    exportComparisonToTxt,
+    exportComparisonToPdf,
+    printComparison,
+    // Pattern exports
+    exportPatternToTxt,
+    exportPatternToPdf,
+    printPattern,
+    // Prime composite exports
+    exportPrimeCompositeToTxt,
+    exportPrimeCompositeToPdf,
+    printPrimeComposite
   };
 }
