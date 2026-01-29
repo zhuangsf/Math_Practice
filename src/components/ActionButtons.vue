@@ -1,6 +1,7 @@
 <template>
   <div class="action-buttons">
     <el-button
+      v-if="true"
       type="primary"
       size="large"
       :loading="isGenerating"
@@ -12,6 +13,7 @@
     </el-button>
 
     <el-button
+      v-if="false"
       type="success"
       size="large"
       :disabled="!hasQuestions || isExporting"
@@ -23,6 +25,7 @@
     </el-button>
 
     <el-button
+      v-if="false"
       type="warning"
       size="large"
       :disabled="!hasQuestions || isExporting"

@@ -2658,6 +2658,69 @@ export function useExport() {
     URL.revokeObjectURL(url);
   }
 
+  /**
+   * Auto-fit column widths for worksheet based on content
+   * modify by jx: add column width auto-fitting function for better Excel export formatting
+   * @param worksheet XLSX worksheet
+   */
+  function autoFitColumnWidths(worksheet: XLSX.WorkSheet): void {
+    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+    const colWidths: { wch: number }[] = [];
+
+    // Initialize column widths
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      colWidths[col] = { wch: 10 }; // Default width
+    }
+
+    // Iterate through all cells to find maximum width
+    for (let row = range.s.r; row <= range.e.r; row++) {
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        const cell = worksheet[cellAddress];
+
+        if (cell && cell.v !== undefined && cell.v !== null) {
+          let cellText = '';
+
+          // Get cell text based on cell type
+          if (typeof cell.v === 'string') {
+            cellText = cell.v;
+          } else if (typeof cell.v === 'number') {
+            cellText = cell.v.toString();
+          } else {
+            cellText = String(cell.v);
+          }
+
+          // Calculate character width (Chinese characters are approximately 2x wider than ASCII)
+          let charWidth = 0;
+          for (const char of cellText) {
+            if (char.charCodeAt(0) > 127) {
+              // Chinese character or full-width character
+              charWidth += 2;
+            } else {
+              // ASCII character
+              charWidth += 1.2; // Slightly more than 1 for better readability
+            }
+          }
+
+          // Add padding for cell margins
+          charWidth += 2;
+
+          // Update maximum width for column
+          if (charWidth > colWidths[col].wch) {
+            colWidths[col].wch = charWidth;
+          }
+        }
+      }
+    }
+
+    // Apply column widths (cap at reasonable maximum)
+    const maxWidth = 50; // Maximum column width in characters
+    const minWidth = 8; // Minimum column width in characters
+    worksheet['!cols'] = colWidths.map(col => ({
+      wch: Math.min(Math.max(col.wch, minWidth), maxWidth)
+    }));
+  }
+
 /**
  * Generate Excel data with 4-column layout
  * @param unifiedQuestions Unified question array
@@ -2677,14 +2740,6 @@ function generateExcelDataWith4Columns(
   // Title row - centered and bold (we'll use formatting later)
   data.push([title]);
   data.push([]); // Empty row after title
-
-  // Header row for columns
-  const headerRow: (string | undefined)[] = [];
-  for (let col = 0; col < columns; col++) {
-    headerRow.push(`题目${col + 1}`);
-    headerRow.push(includeAnswers ? '答案' : undefined);
-  }
-  data.push(headerRow);
 
   // Calculate rows needed
   const rows = Math.ceil(totalQuestions / columns);
@@ -2735,6 +2790,11 @@ function generateExcelDataWith4Columns(
 
       // Create worksheet and workbook
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
 
@@ -2762,6 +2822,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2787,6 +2852,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2812,6 +2882,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2837,6 +2912,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2862,6 +2942,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2887,6 +2972,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2912,6 +3002,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2937,6 +3032,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2962,6 +3062,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
@@ -2987,6 +3092,11 @@ function generateExcelDataWith4Columns(
       const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
+
+      // Auto-fit column widths based on content
+      // modify by jx: apply auto-fit column widths for better formatting
+      autoFitColumnWidths(worksheet);
+
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, title);
       downloadExcel(workbook, title);
