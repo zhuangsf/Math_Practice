@@ -2658,9 +2658,71 @@ export function useExport() {
     URL.revokeObjectURL(url);
   }
 
+/**
+ * Generate Excel data with 4-column layout
+ * @param unifiedQuestions Unified question array
+ * @param includeAnswers Whether to include answers
+ * @param title Title for the Excel file
+ * @returns 2D array for Excel export
+ */
+function generateExcelDataWith4Columns(
+  unifiedQuestions: UnifiedQuestion[],
+  includeAnswers: boolean,
+  title: string
+): (string | number | undefined)[][] {
+  const data: (string | number | undefined)[][] = [];
+  const totalQuestions = unifiedQuestions.length;
+  const columns = 4;
+
+  // Title row - centered and bold (we'll use formatting later)
+  data.push([title]);
+  data.push([]); // Empty row after title
+
+  // Header row for columns
+  const headerRow: (string | undefined)[] = [];
+  for (let col = 0; col < columns; col++) {
+    headerRow.push(`题目${col + 1}`);
+    headerRow.push(includeAnswers ? '答案' : undefined);
+  }
+  data.push(headerRow);
+
+  // Calculate rows needed
+  const rows = Math.ceil(totalQuestions / columns);
+
+  // Generate data rows with 4 columns
+  for (let row = 0; row < rows; row++) {
+    const dataRow: (string | number | undefined)[] = [];
+
+    for (let col = 0; col < columns; col++) {
+      const index = row + (col * rows);
+      if (index < totalQuestions) {
+        const question = unifiedQuestions[index];
+        if (includeAnswers) {
+          dataRow.push(`${question.questionNumber}. ${question.expression}`);
+          dataRow.push(String(question.answer));
+        } else {
+          dataRow.push(`${question.questionNumber}. ${question.expression}`);
+          dataRow.push(undefined);
+        }
+      } else {
+        dataRow.push(undefined);
+        dataRow.push(undefined);
+      }
+    }
+
+    data.push(dataRow);
+  }
+
+  // Footer with total count
+  data.push([]);
+  data.push([`共 ${totalQuestions} 题`]);
+
+  return data;
+}
+
   /**
    * Export arithmetic questions to Excel file
-   * modify by jx: implement Excel export function for arithmetic questions
+   * modify by jx: implement Excel export function for arithmetic questions with 4-column layout
    */
   const exportToExcel = (questions: Question[], includeAnswers: boolean, title: string = '四则运算题目') => {
     isExporting.value = true;
@@ -2668,32 +2730,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyArithmeticQuestion(q, i));
 
-      // Create data array for Excel
-      const data: (string | number | undefined)[][] = [];
-
-      // Add header row
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      // Add data rows
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       // Create worksheet and workbook
       const worksheet = XLSX.utils.aoa_to_sheet(data);
@@ -2712,7 +2750,7 @@ export function useExport() {
 
   /**
    * Export equation questions to Excel file
-   * modify by jx: implement Excel export function for equation questions
+   * modify by jx: implement Excel export function for equation questions with 4-column layout
    */
   const exportEquationsToExcel = (questions: EquationQuestion[], includeAnswers: boolean, title: string = '一元一次方程题目') => {
     isExporting.value = true;
@@ -2720,29 +2758,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2758,7 +2775,7 @@ export function useExport() {
 
   /**
    * Export fraction questions to Excel file
-   * modify by jx: implement Excel export function for fraction questions
+   * modify by jx: implement Excel export function for fraction questions with 4-column layout
    */
   const exportFractionsToExcel = (questions: FractionQuestion[], includeAnswers: boolean, title: string = '分数运算题目') => {
     isExporting.value = true;
@@ -2766,29 +2783,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyFractionQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2804,7 +2800,7 @@ export function useExport() {
 
   /**
    * Export decimal questions to Excel file
-   * modify by jx: implement Excel export function for decimal questions
+   * modify by jx: implement Excel export function for decimal questions with 4-column layout
    */
   const exportDecimalsToExcel = (questions: DecimalQuestion[], includeAnswers: boolean, title: string = '小数运算题目') => {
     isExporting.value = true;
@@ -2812,29 +2808,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyDecimalQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2850,7 +2825,7 @@ export function useExport() {
 
   /**
    * Export geometry questions to Excel file
-   * modify by jx: implement Excel export function for geometry questions
+   * modify by jx: implement Excel export function for geometry questions with 4-column layout
    */
   const exportGeometryToExcel = (questions: GeometryQuestion[], includeAnswers: boolean, title: string = '几何计算题目') => {
     isExporting.value = true;
@@ -2858,29 +2833,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyGeometryQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2896,7 +2850,7 @@ export function useExport() {
 
   /**
    * Export percentage questions to Excel file
-   * modify by jx: implement Excel export function for percentage questions
+   * modify by jx: implement Excel export function for percentage questions with 4-column layout
    */
   const exportPercentageToExcel = (questions: PercentageQuestion[], includeAnswers: boolean, title: string = '百分数题目') => {
     isExporting.value = true;
@@ -2904,29 +2858,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyPercentageQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2942,7 +2875,7 @@ export function useExport() {
 
   /**
    * Export unit conversion questions to Excel file
-   * modify by jx: implement Excel export function for unit conversion questions
+   * modify by jx: implement Excel export function for unit conversion questions with 4-column layout
    */
   const exportUnitConversionToExcel = (questions: UnitConversionQuestion[], includeAnswers: boolean, title: string = '单位换算题目') => {
     isExporting.value = true;
@@ -2950,29 +2883,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyUnitConversionQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -2988,7 +2900,7 @@ export function useExport() {
 
   /**
    * Export factor multiple questions to Excel file
-   * modify by jx: implement Excel export function for factor multiple questions
+   * modify by jx: implement Excel export function for factor multiple questions with 4-column layout
    */
   const exportFactorMultipleToExcel = (questions: FactorMultipleQuestion[], includeAnswers: boolean, title: string = '倍数与因数题目') => {
     isExporting.value = true;
@@ -2996,29 +2908,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyFactorMultipleQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -3034,7 +2925,7 @@ export function useExport() {
 
   /**
    * Export comparison questions to Excel file
-   * modify by jx: implement Excel export function for comparison questions
+   * modify by jx: implement Excel export function for comparison questions with 4-column layout
    */
   const exportComparisonToExcel = (questions: ComparisonQuestion[], includeAnswers: boolean, title: string = '比较大小题目') => {
     isExporting.value = true;
@@ -3042,29 +2933,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyComparisonQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} (${question.answer})`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -3080,7 +2950,7 @@ export function useExport() {
 
   /**
    * Export pattern questions to Excel file
-   * modify by jx: implement Excel export function for pattern questions
+   * modify by jx: implement Excel export function for pattern questions with 4-column layout
    */
   const exportPatternToExcel = (questions: PatternQuestion[], includeAnswers: boolean, title: string = '找规律题目') => {
     isExporting.value = true;
@@ -3088,29 +2958,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyPatternQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
@@ -3126,7 +2975,7 @@ export function useExport() {
 
   /**
    * Export prime composite questions to Excel file
-   * modify by jx: implement Excel export function for prime composite questions
+   * modify by jx: implement Excel export function for prime composite questions with 4-column layout
    */
   const exportPrimeCompositeToExcel = (questions: PrimeCompositeQuestion[], includeAnswers: boolean, title: string = '质数与合数题目') => {
     isExporting.value = true;
@@ -3134,29 +2983,8 @@ export function useExport() {
     try {
       const unifiedQuestions = questions.map((q, i) => unifyPrimeCompositeQuestion(q, i));
 
-      const data: (string | number | undefined)[][] = [];
-
-      if (includeAnswers) {
-        data.push(['题号', '题目', '答案']);
-      } else {
-        data.push(['题号', '题目']);
-      }
-
-      for (const question of unifiedQuestions) {
-        if (includeAnswers) {
-          data.push([
-            question.questionNumber,
-            `${question.expression} = ${question.answer}`,
-            undefined
-          ]);
-        } else {
-          data.push([
-            question.questionNumber,
-            question.expression,
-            undefined
-          ]);
-        }
-      }
+      // Create data array for Excel with 4-column layout
+      const data = generateExcelDataWith4Columns(unifiedQuestions, includeAnswers, title);
 
       const worksheet = XLSX.utils.aoa_to_sheet(data);
       const workbook = XLSX.utils.book_new();
