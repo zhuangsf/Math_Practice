@@ -487,3 +487,169 @@ export interface FactorMultipleTutoringPlan {
   suggestions: string[];              // Learning suggestions
   recommendedConfig?: Partial<FactorMultipleConfig>; // Recommended practice configuration
 }
+
+// Prime and composite question model
+// modify by jx: define prime and composite question interface
+export interface PrimeCompositeQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression
+  answer: boolean | number[]; // Answer (boolean for is-prime/is-composite, array for prime factors)
+  questionType: 'is-prime' | 'is-composite' | 'prime-factors'; // Question type
+  numbers: number[];       // Numbers involved in the question
+}
+
+// Configuration for generating prime and composite questions
+// modify by jx: define configuration interface for prime and composite question generation
+export interface PrimeCompositeConfig {
+  questionTypes: ('is-prime' | 'is-composite' | 'prime-factors')[];
+  valueRange: [number, number];  // Value range [min, max]
+  questionCount: number;         // Number of questions to generate
+}
+
+// Prime composite wrong question record
+// modify by jx: define prime composite wrong question interface
+export interface PrimeCompositeWrongQuestion {
+  questionId: string;           // Question ID
+  question: PrimeCompositeQuestion; // Question information
+  studentAnswer: boolean | number[] | string | null; // Student's answer
+  correctAnswer: boolean | number[]; // Correct answer
+  questionType: 'is-prime' | 'is-composite' | 'prime-factors'; // Question type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Prime composite wrong question statistics
+// modify by jx: define prime composite wrong question statistics interface for analysis
+export interface PrimeCompositeWrongQuestionStats {
+  byQuestionType: {
+    'is-prime': number;
+    'is-composite': number;
+    'prime-factors': number;
+  };
+  total: number;
+}
+
+// Prime composite tutoring plan recommendation
+// modify by jx: define prime composite tutoring plan interface
+export interface PrimeCompositeTutoringPlan {
+  weakAreas: {
+    questionTypes: ('is-prime' | 'is-composite' | 'prime-factors')[]; // Weak question types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<PrimeCompositeConfig>; // Recommended practice configuration
+}
+
+// Comparison question model
+// modify by jx: define comparison question interface
+export interface ComparisonQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression
+  answer: number;          // Answer (-1 for <, 0 for =, 1 for >)
+  questionType: 'integer' | 'decimal' | 'fraction' | 'decimal-fraction'; // Question type
+  numbers: number[];       // Numbers involved in the question
+  decimalPlaces?: number;  // Number of decimal places (for decimal comparison)
+  fractionData?: {         // Fraction data (for mixed comparison)
+    num1?: number;
+    den1?: number;
+    num2?: number;
+    den2?: number;
+  };
+}
+
+// Configuration for generating comparison questions
+// modify by jx: define configuration interface for comparison question generation
+export interface ComparisonConfig {
+  questionTypes: ('integer' | 'decimal' | 'fraction' | 'decimal-fraction')[];
+  valueRange: [number, number];  // Value range [min, max]
+  questionCount: number;         // Number of questions to generate
+  decimalPlaces?: number;        // Number of decimal places for decimal comparison
+  maxDenominator?: number;       // Maximum denominator for fraction comparison
+}
+
+// Comparison wrong question record
+// modify by jx: define comparison wrong question interface
+export interface ComparisonWrongQuestion {
+  questionId: string;           // Question ID
+  question: ComparisonQuestion; // Question information
+  studentAnswer: string | null; // Student's answer ('<', '=', or '>')
+  correctAnswer: number;        // Correct answer (-1, 0, or 1)
+  questionType: 'integer' | 'decimal' | 'fraction' | 'decimal-fraction'; // Question type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Comparison wrong question statistics
+// modify by jx: define comparison wrong question statistics interface for analysis
+export interface ComparisonWrongQuestionStats {
+  byQuestionType: {
+    'integer': number;
+    'decimal': number;
+    'fraction': number;
+    'decimal-fraction': number;
+  };
+  total: number;
+}
+
+// Comparison tutoring plan recommendation
+// modify by jx: define comparison tutoring plan interface
+export interface ComparisonTutoringPlan {
+  weakAreas: {
+    questionTypes: ('integer' | 'decimal' | 'fraction' | 'decimal-fraction')[]; // Weak question types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<ComparisonConfig>; // Recommended practice configuration
+}
+
+// Pattern question model
+// modify by jx: define pattern question interface
+export interface PatternQuestion {
+  id: string;              // Unique identifier for the question
+  expression: string;      // Question expression
+  answer: number;          // Correct answer for the missing term
+  questionType: 'arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube'; // Pattern type
+  numbers: number[];       // Full sequence of numbers
+  missingIndex: number;    // Index of the missing number
+}
+
+// Configuration for generating pattern questions
+// modify by jx: define configuration interface for pattern question generation
+export interface PatternConfig {
+  patternTypes: ('arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube')[];
+  questionCount: number;   // Number of questions to generate
+  termsCount: number;      // Number of terms to display (default: 4)
+}
+
+// Pattern wrong question record
+// modify by jx: define pattern wrong question interface
+export interface PatternWrongQuestion {
+  questionId: string;           // Question ID
+  question: PatternQuestion;    // Question information
+  studentAnswer: string | null; // Student's answer
+  correctAnswer: number;        // Correct answer
+  questionType: 'arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube'; // Pattern type
+  timestamp: Date;               // Answer timestamp
+  timeSpent?: number;            // Time spent on this question (seconds)
+}
+
+// Pattern wrong question statistics
+// modify by jx: define pattern wrong question statistics interface for analysis
+export interface PatternWrongQuestionStats {
+  byPatternType: {
+    'arithmetic': number;
+    'geometric': number;
+    'fibonacci': number;
+    'square': number;
+    'cube': number;
+  };
+  total: number;
+}
+
+// Pattern tutoring plan recommendation
+// modify by jx: define pattern tutoring plan interface
+export interface PatternTutoringPlan {
+  weakAreas: {
+    patternTypes: ('arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube')[]; // Weak pattern types
+  };
+  suggestions: string[];              // Learning suggestions
+  recommendedConfig?: Partial<PatternConfig>; // Recommended practice configuration
+}

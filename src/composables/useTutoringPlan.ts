@@ -23,7 +23,16 @@ import type {
   GeometryConfig,
   FactorMultipleWrongQuestionStats,
   FactorMultipleTutoringPlan,
-  FactorMultipleConfig
+  FactorMultipleConfig,
+  PrimeCompositeWrongQuestionStats,
+  PrimeCompositeTutoringPlan,
+  PrimeCompositeConfig,
+  ComparisonWrongQuestionStats,
+  ComparisonTutoringPlan,
+  ComparisonConfig,
+  PatternWrongQuestionStats,
+  PatternTutoringPlan,
+  PatternConfig
 } from '@/types';
 
 /**
@@ -766,6 +775,277 @@ function getFactorMultipleQuestionTypeDisplayName(
 }
 
 /**
+ * Generate prime composite tutoring plan based on wrong question statistics
+ * modify by jx: add function to generate prime composite tutoring plan
+ * @param stats Prime composite wrong question statistics
+ * @param totalQuestions Total number of questions
+ * @returns PrimeCompositeTutoringPlan object
+ */
+export function generatePrimeCompositeTutoringPlan(
+  stats: PrimeCompositeWrongQuestionStats,
+  totalQuestions: number
+): PrimeCompositeTutoringPlan {
+  const weakAreas = {
+    questionTypes: [] as ('is-prime' | 'is-composite' | 'prime-factors')[]
+  };
+  const suggestions: string[] = [];
+
+  // Calculate error rates
+  const errorRate = stats.total / totalQuestions;
+  
+  // Threshold for weak area: error rate > 30%
+  const weakThreshold = 0.3;
+  // Threshold for severe weak area: error rate > 50%
+  const severeThreshold = 0.5;
+
+  // Analyze question types
+  const questionTypeCounts = [
+    { type: 'is-prime' as const, count: stats.byQuestionType['is-prime'] },
+    { type: 'is-composite' as const, count: stats.byQuestionType['is-composite'] },
+    { type: 'prime-factors' as const, count: stats.byQuestionType['prime-factors'] }
+  ];
+
+  // Find weak question types
+  questionTypeCounts.forEach(({ type, count }) => {
+    const typeErrorRate = count / totalQuestions;
+    if (typeErrorRate >= weakThreshold) {
+      weakAreas.questionTypes.push(type);
+      
+      const typeName = getPrimeCompositeQuestionTypeDisplayName(type);
+      if (typeErrorRate >= severeThreshold) {
+        suggestions.push(`您在${typeName}方面错误较多，建议重点加强练习`);
+      } else {
+        suggestions.push(`您在${typeName}方面需要加强，建议多练习相关题目`);
+      }
+    }
+  });
+
+  // Generate general suggestions
+  if (stats.total === 0) {
+    suggestions.push('恭喜！您全部答对了，可以尝试增加难度或题目数量');
+  } else if (errorRate < weakThreshold) {
+    suggestions.push('您的表现不错，继续保持！可以适当增加题目难度');
+  } else if (errorRate >= severeThreshold) {
+    suggestions.push('建议从基础题目开始练习，逐步提高难度');
+  }
+
+  // Generate recommended configuration
+  let recommendedConfig: Partial<PrimeCompositeConfig> | undefined;
+  
+  if (weakAreas.questionTypes.length > 0) {
+    recommendedConfig = {
+      questionTypes: weakAreas.questionTypes,
+      questionCount: 20 // Default to 20 questions for focused practice
+    };
+  }
+
+  return {
+    weakAreas,
+    suggestions,
+    recommendedConfig
+  };
+}
+
+/**
+ * Get prime composite question type display name
+ * modify by jx: add function to get prime composite question type display name
+ * @param type Question type
+ * @returns Display name
+ */
+function getPrimeCompositeQuestionTypeDisplayName(
+  type: 'is-prime' | 'is-composite' | 'prime-factors'
+): string {
+  const nameMap: Record<string, string> = {
+    'is-prime': '判断质数',
+    'is-composite': '判断合数',
+    'prime-factors': '质因数分解'
+  };
+  return nameMap[type] || type;
+}
+
+/**
+ * Generate comparison tutoring plan based on wrong question statistics
+ * modify by jx: add function to generate comparison tutoring plan
+ * @param stats Comparison wrong question statistics
+ * @param totalQuestions Total number of questions
+ * @returns ComparisonTutoringPlan object
+ */
+export function generateComparisonTutoringPlan(
+  stats: ComparisonWrongQuestionStats,
+  totalQuestions: number
+): ComparisonTutoringPlan {
+  const weakAreas = {
+    questionTypes: [] as ('integer' | 'decimal' | 'fraction')[]
+  };
+  const suggestions: string[] = [];
+
+  // Calculate error rates
+  const errorRate = stats.total / totalQuestions;
+  
+  // Threshold for weak area: error rate > 30%
+  const weakThreshold = 0.3;
+  // Threshold for severe weak area: error rate > 50%
+  const severeThreshold = 0.5;
+
+  // Analyze question types
+  const questionTypeCounts = [
+    { type: 'integer' as const, count: stats.byQuestionType['integer'] },
+    { type: 'decimal' as const, count: stats.byQuestionType['decimal'] },
+    { type: 'fraction' as const, count: stats.byQuestionType['fraction'] }
+  ];
+
+  // Find weak question types
+  questionTypeCounts.forEach(({ type, count }) => {
+    const typeErrorRate = count / totalQuestions;
+    if (typeErrorRate >= weakThreshold) {
+      weakAreas.questionTypes.push(type);
+      
+      const typeName = getComparisonQuestionTypeDisplayName(type);
+      if (typeErrorRate >= severeThreshold) {
+        suggestions.push(`您在${typeName}方面错误较多，建议重点加强练习`);
+      } else {
+        suggestions.push(`您在${typeName}方面需要加强，建议多练习相关题目`);
+      }
+    }
+  });
+
+  // Generate general suggestions
+  if (stats.total === 0) {
+    suggestions.push('恭喜！您全部答对了，可以尝试增加难度或题目数量');
+  } else if (errorRate < weakThreshold) {
+    suggestions.push('您的表现不错，继续保持！可以适当增加题目难度');
+  } else if (errorRate >= severeThreshold) {
+    suggestions.push('建议从基础题目开始练习，逐步提高难度');
+  }
+
+  // Generate recommended configuration
+  let recommendedConfig: Partial<ComparisonConfig> | undefined;
+  
+  if (weakAreas.questionTypes.length > 0) {
+    recommendedConfig = {
+      questionTypes: weakAreas.questionTypes,
+      questionCount: 20 // Default to 20 questions for focused practice
+    };
+  }
+
+  return {
+    weakAreas,
+    suggestions,
+    recommendedConfig
+  };
+}
+
+/**
+ * Get comparison question type display name
+ * modify by jx: add function to get comparison question type display name
+ * @param type Question type
+ * @returns Display name
+ */
+function getComparisonQuestionTypeDisplayName(
+  type: 'integer' | 'decimal' | 'fraction'
+): string {
+  const nameMap: Record<string, string> = {
+    'integer': '整数比较',
+    'decimal': '小数比较',
+    'fraction': '分数比较'
+  };
+  return nameMap[type] || type;
+}
+
+/**
+ * Generate pattern tutoring plan based on wrong question statistics
+ * modify by jx: add function to generate pattern tutoring plan
+ * @param stats Pattern wrong question statistics
+ * @param totalQuestions Total number of questions
+ * @returns PatternTutoringPlan object
+ */
+export function generatePatternTutoringPlan(
+  stats: PatternWrongQuestionStats,
+  totalQuestions: number
+): PatternTutoringPlan {
+  const weakAreas = {
+    patternTypes: [] as ('arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube')[]
+  };
+  const suggestions: string[] = [];
+
+  // Calculate error rates
+  const errorRate = stats.total / totalQuestions;
+  
+  // Threshold for weak area: error rate > 30%
+  const weakThreshold = 0.3;
+  // Threshold for severe weak area: error rate > 50%
+  const severeThreshold = 0.5;
+
+  // Analyze pattern types
+  const patternTypeCounts = [
+    { type: 'arithmetic' as const, count: stats.byPatternType['arithmetic'] },
+    { type: 'geometric' as const, count: stats.byPatternType['geometric'] },
+    { type: 'fibonacci' as const, count: stats.byPatternType['fibonacci'] },
+    { type: 'square' as const, count: stats.byPatternType['square'] },
+    { type: 'cube' as const, count: stats.byPatternType['cube'] }
+  ];
+
+  // Find weak pattern types
+  patternTypeCounts.forEach(({ type, count }) => {
+    const typeErrorRate = count / totalQuestions;
+    if (typeErrorRate >= weakThreshold) {
+      weakAreas.patternTypes.push(type);
+      
+      const typeName = getPatternTypeDisplayName(type);
+      if (typeErrorRate >= severeThreshold) {
+        suggestions.push(`您在${typeName}方面错误较多，建议重点加强练习`);
+      } else {
+        suggestions.push(`您在${typeName}方面需要加强，建议多练习相关题目`);
+      }
+    }
+  });
+
+  // Generate general suggestions
+  if (stats.total === 0) {
+    suggestions.push('恭喜！您全部答对了，可以尝试增加难度或题目数量');
+  } else if (errorRate < weakThreshold) {
+    suggestions.push('您的表现不错，继续保持！可以适当增加题目难度');
+  } else if (errorRate >= severeThreshold) {
+    suggestions.push('建议从基础题目开始练习，逐步提高难度');
+  }
+
+  // Generate recommended configuration
+  let recommendedConfig: Partial<PatternConfig> | undefined;
+  
+  if (weakAreas.patternTypes.length > 0) {
+    recommendedConfig = {
+      patternTypes: weakAreas.patternTypes,
+      questionCount: 20 // Default to 20 questions for focused practice
+    };
+  }
+
+  return {
+    weakAreas,
+    suggestions,
+    recommendedConfig
+  };
+}
+
+/**
+ * Get pattern type display name
+ * modify by jx: add function to get pattern type display name
+ * @param type Pattern type
+ * @returns Display name
+ */
+function getPatternTypeDisplayName(
+  type: 'arithmetic' | 'geometric' | 'fibonacci' | 'square' | 'cube'
+): string {
+  const nameMap: Record<string, string> = {
+    'arithmetic': '等差数列',
+    'geometric': '等比数列',
+    'fibonacci': '斐波那契数列',
+    'square': '平方数列',
+    'cube': '立方数列'
+  };
+  return nameMap[type] || type;
+}
+
+/**
  * Composable for tutoring plan functionality
  */
 export function useTutoringPlan() {
@@ -776,6 +1056,9 @@ export function useTutoringPlan() {
     generatePercentageTutoringPlan,
     generateUnitConversionTutoringPlan,
     generateGeometryTutoringPlan,
-    generateFactorMultipleTutoringPlan
+    generateFactorMultipleTutoringPlan,
+    generatePrimeCompositeTutoringPlan,
+    generateComparisonTutoringPlan,
+    generatePatternTutoringPlan
   };
 }

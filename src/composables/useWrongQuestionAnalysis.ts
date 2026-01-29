@@ -23,7 +23,16 @@ import type {
   GeometryWrongQuestionStats,
   FactorMultipleQuestion,
   FactorMultipleWrongQuestion,
-  FactorMultipleWrongQuestionStats
+  FactorMultipleWrongQuestionStats,
+  PrimeCompositeQuestion,
+  PrimeCompositeWrongQuestion,
+  PrimeCompositeWrongQuestionStats,
+  ComparisonQuestion,
+  ComparisonWrongQuestion,
+  ComparisonWrongQuestionStats,
+  PatternQuestion,
+  PatternWrongQuestion,
+  PatternWrongQuestionStats
 } from '@/types';
 
 /**
@@ -533,6 +542,189 @@ export function calculateFactorMultipleWrongQuestionStats(
 }
 
 /**
+ * Extract wrong prime composite questions from student answers
+ * modify by jx: add function to extract wrong prime composite questions
+ * @param questions Array of prime composite questions
+ * @param answers Map of student answers (questionId -> { answer: boolean | number[] | string | null, status: AnswerStatus })
+ * @returns Array of wrong prime composite questions
+ */
+export function extractPrimeCompositeWrongQuestions(
+  questions: PrimeCompositeQuestion[],
+  answers: Map<string, { answer: boolean | number[] | string | null; status: string }>
+): PrimeCompositeWrongQuestion[] {
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
+  const wrongQuestions: PrimeCompositeWrongQuestion[] = [];
+
+  answers.forEach((answer, questionId) => {
+    if (answer.status === 'wrong' && answer.answer !== null && answer.answer !== undefined) {
+      const question = questionMap.get(questionId);
+      if (!question) {
+        return;
+      }
+
+      wrongQuestions.push({
+        questionId: question.id,
+        question,
+        studentAnswer: answer.answer,
+        correctAnswer: question.answer,
+        questionType: question.questionType,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  return wrongQuestions;
+}
+
+/**
+ * Calculate prime composite wrong question statistics
+ * modify by jx: add function to calculate prime composite wrong question statistics
+ * @param wrongQuestions Array of wrong prime composite questions
+ * @returns PrimeCompositeWrongQuestionStats object
+ */
+export function calculatePrimeCompositeWrongQuestionStats(
+  wrongQuestions: PrimeCompositeWrongQuestion[]
+): PrimeCompositeWrongQuestionStats {
+  const stats: PrimeCompositeWrongQuestionStats = {
+    byQuestionType: {
+      'is-prime': 0,
+      'is-composite': 0,
+      'prime-factors': 0
+    },
+    total: wrongQuestions.length
+  };
+
+  wrongQuestions.forEach((wrongQuestion) => {
+    stats.byQuestionType[wrongQuestion.questionType]++;
+  });
+
+  return stats;
+}
+
+/**
+ * Extract wrong comparison questions from student answers
+ * modify by jx: add function to extract wrong comparison questions
+ * @param questions Array of comparison questions
+ * @param answers Map of student answers (questionId -> { answer: string | null, status: AnswerStatus })
+ * @returns Array of wrong comparison questions
+ */
+export function extractComparisonWrongQuestions(
+  questions: ComparisonQuestion[],
+  answers: Map<string, { answer: string | null; status: string }>
+): ComparisonWrongQuestion[] {
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
+  const wrongQuestions: ComparisonWrongQuestion[] = [];
+
+  answers.forEach((answer, questionId) => {
+    if (answer.status === 'wrong' && answer.answer !== null && answer.answer !== undefined) {
+      const question = questionMap.get(questionId);
+      if (!question) {
+        return;
+      }
+
+      wrongQuestions.push({
+        questionId: question.id,
+        question,
+        studentAnswer: answer.answer,
+        correctAnswer: question.answer,
+        questionType: question.questionType,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  return wrongQuestions;
+}
+
+/**
+ * Calculate comparison wrong question statistics
+ * modify by jx: add function to calculate comparison wrong question statistics
+ * @param wrongQuestions Array of wrong comparison questions
+ * @returns ComparisonWrongQuestionStats object
+ */
+export function calculateComparisonWrongQuestionStats(
+  wrongQuestions: ComparisonWrongQuestion[]
+): ComparisonWrongQuestionStats {
+  const stats: ComparisonWrongQuestionStats = {
+    byQuestionType: {
+      'integer': 0,
+      'decimal': 0,
+      'fraction': 0,
+      'decimal-fraction': 0
+    },
+    total: wrongQuestions.length
+  };
+
+  wrongQuestions.forEach((wrongQuestion) => {
+    stats.byQuestionType[wrongQuestion.questionType]++;
+  });
+
+  return stats;
+}
+
+/**
+ * Extract wrong pattern questions from student answers
+ * modify by jx: add function to extract wrong pattern questions
+ * @param questions Array of pattern questions
+ * @param answers Map of student answers (questionId -> { answer: string | null, status: AnswerStatus })
+ * @returns Array of wrong pattern questions
+ */
+export function extractPatternWrongQuestions(
+  questions: PatternQuestion[],
+  answers: Map<string, { answer: string | null; status: string }>
+): PatternWrongQuestion[] {
+  const questionMap = new Map(questions.map((q) => [q.id, q]));
+  const wrongQuestions: PatternWrongQuestion[] = [];
+
+  answers.forEach((answer, questionId) => {
+    if (answer.status === 'wrong' && answer.answer !== null && answer.answer !== undefined) {
+      const question = questionMap.get(questionId);
+      if (!question) {
+        return;
+      }
+
+      wrongQuestions.push({
+        questionId: question.id,
+        question,
+        studentAnswer: answer.answer,
+        correctAnswer: question.answer,
+        questionType: question.questionType,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  return wrongQuestions;
+}
+
+/**
+ * Calculate pattern wrong question statistics
+ * modify by jx: add function to calculate pattern wrong question statistics
+ * @param wrongQuestions Array of wrong pattern questions
+ * @returns PatternWrongQuestionStats object
+ */
+export function calculatePatternWrongQuestionStats(
+  wrongQuestions: PatternWrongQuestion[]
+): PatternWrongQuestionStats {
+  const stats: PatternWrongQuestionStats = {
+    byPatternType: {
+      'arithmetic': 0,
+      'geometric': 0,
+      'fibonacci': 0,
+      'square': 0,
+      'cube': 0
+    },
+    total: wrongQuestions.length
+  };
+
+  wrongQuestions.forEach((wrongQuestion) => {
+    stats.byPatternType[wrongQuestion.questionType]++;
+  });
+
+  return stats;
+}
+
+/**
  * Composable for wrong question analysis
  */
 export function useWrongQuestionAnalysis() {
@@ -551,6 +743,12 @@ export function useWrongQuestionAnalysis() {
     calculateGeometryWrongQuestionStats,
     extractFactorMultipleWrongQuestions,
     calculateFactorMultipleWrongQuestionStats,
+    extractPrimeCompositeWrongQuestions,
+    calculatePrimeCompositeWrongQuestionStats,
+    extractComparisonWrongQuestions,
+    calculateComparisonWrongQuestionStats,
+    extractPatternWrongQuestions,
+    calculatePatternWrongQuestionStats,
     getOperationTypeName,
     getOperandCountName
   };

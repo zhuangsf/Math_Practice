@@ -100,7 +100,7 @@ export function generateUnitConversionQuestions(config: UnitConversionConfig): U
     : ['length', 'weight', 'area', 'volume', 'time'];
   
   for (let i = 0; i < config.questionCount; i++) {
-    const selectedType = unitTypes[Math.floor(Math.random() * unitTypes.length)];
+    const selectedType = unitTypes[Math.floor(Math.random() * unitTypes.length)] as 'length' | 'weight' | 'area' | 'volume' | 'time';
     const question = generateUnitConversionQuestion(selectedType, config);
     if (question) {
       questions.push(question);

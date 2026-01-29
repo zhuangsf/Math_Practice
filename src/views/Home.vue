@@ -33,6 +33,15 @@
         <el-tab-pane label="倍数与因数" name="factor-multiple">
           <FactorMultiplePage />
         </el-tab-pane>
+        <el-tab-pane label="质数与合数" name="prime-composite">
+          <PrimeCompositePage />
+        </el-tab-pane>
+        <el-tab-pane label="比较大小" name="comparison">
+          <ComparisonPage />
+        </el-tab-pane>
+        <el-tab-pane label="找规律" name="pattern">
+          <PatternPage />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </div>
@@ -50,6 +59,9 @@ import PercentagePage from '@/views/PercentagePage.vue';
 import UnitConversionPage from '@/views/UnitConversionPage.vue';
 import GeometryPage from '@/views/GeometryPage.vue';
 import FactorMultiplePage from '@/views/FactorMultiplePage.vue';
+import PrimeCompositePage from '@/views/PrimeCompositePage.vue';
+import ComparisonPage from '@/views/ComparisonPage.vue';
+import PatternPage from '@/views/PatternPage.vue';
 
 // Active tab state
 const activeTab = ref('arithmetic');

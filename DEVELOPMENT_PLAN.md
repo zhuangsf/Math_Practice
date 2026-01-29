@@ -11,16 +11,15 @@
 2. ✅ **小数运算** - 小数加减乘除、小数与整数混合运算（已完成）
 
 ### 中优先级（第二阶段开发）
-3. **百分数** - 百分数与小数/分数互化、百分数应用题
-4. **单位换算** - 长度、重量、面积、体积、时间单位换算
-5. **几何计算** - 周长、面积、体积计算
-6. **倍数与因数** - 找倍数、找因数、最大公因数、最小公倍数
+3. ✅ **百分数** - 百分数与小数/分数互化、百分数应用题
+4. ✅ **单位换算** - 长度、重量、面积、体积、时间单位换算
+5. ✅ **几何计算** - 周长、面积、体积计算
+6. ✅ **倍数与因数** - 找倍数、找因数、最大公因数、最小公倍数
 
 ### 低优先级（第三阶段开发）
 7. **质数与合数** - 判断质数/合数、质因数分解
 8. **比较大小** - 整数、小数、分数比较
-9. **估算练习** - 加减法估算、乘除法估算
-10. **找规律** - 数字规律、图形规律
+9. **找规律** - 数字规律、图形规律
 
 ## 代码架构规划
 
@@ -40,7 +39,6 @@ src/
 │   ├── FactorMultiplePage.vue     # 倍数因数页面（✅ 已完成，含辅导计划）
 │   ├── PrimeCompositePage.vue     # 质数合数页面（新增）
 │   ├── ComparisonPage.vue         # 比较大小页面（新增）
-│   ├── EstimationPage.vue         # 估算练习页面（新增）
 │   └── PatternPage.vue            # 找规律页面（新增）
 │
 ├── components/                      # 组件
@@ -53,7 +51,6 @@ src/
 │   ├── FactorMultipleControlPanel.vue  # 倍数因数控制面板（✅ 已完成）
 │   ├── PrimeCompositeControlPanel.vue  # 质数合数控制面板（新增）
 │   ├── ComparisonControlPanel.vue # 比较大小控制面板（新增）
-│   ├── EstimationControlPanel.vue # 估算练习控制面板（新增）
 │   ├── PatternControlPanel.vue    # 找规律控制面板（新增）
 │   ├── QuestionDisplay.vue         # 四则运算题目显示（已存在）
 │   ├── FractionDisplay.vue         # 分数题目显示（✅ 已完成）
@@ -74,6 +71,12 @@ src/
 │   ├── GeometryTutoringPlan.vue                # 几何计算辅导计划组件（✅ 已完成）
 │   ├── FactorMultipleWrongQuestionAnalysis.vue # 倍数因数错题分析组件（✅ 已完成）
 │   └── FactorMultipleTutoringPlan.vue          # 倍数因数辅导计划组件（✅ 已完成）
+│   ├── PrimeCompositeWrongQuestionAnalysis.vue # 质数合数错题分析组件（新增）
+│   ├── PrimeCompositeTutoringPlan.vue          # 质数合数辅导计划组件（新增）
+│   ├── ComparisonWrongQuestionAnalysis.vue     # 比较大小错题分析组件（新增）
+│   ├── ComparisonTutoringPlan.vue              # 比较大小辅导计划组件（新增）
+│   ├── PatternWrongQuestionAnalysis.vue        # 找规律错题分析组件（新增）
+│   └── PatternTutoringPlan.vue                 # 找规律辅导计划组件（新增）
 │
 ├── composables/                     # 组合式函数
 │   ├── useQuestionGenerator.ts     # 四则运算生成器（已存在）
@@ -85,7 +88,6 @@ src/
 │   ├── useFactorMultipleGenerator.ts   # 倍数因数生成器（✅ 已完成）
 │   ├── usePrimeCompositeGenerator.ts   # 质数合数生成器（新增）
 │   ├── useComparisonGenerator.ts   # 比较大小生成器（新增）
-│   ├── useEstimationGenerator.ts   # 估算练习生成器（新增）
 │   ├── usePatternGenerator.ts      # 找规律生成器（新增）
 │   ├── useAnswering.ts             # 答题功能（已存在，可复用）
 │   ├── useScoring.ts               # 评分功能（已存在，可复用）
@@ -103,7 +105,6 @@ src/
 │   ├── factorMultipleUtils.ts      # 倍数因数工具（✅ 已完成）
 │   ├── primeCompositeUtils.ts     # 质数合数工具（新增）
 │   ├── comparisonUtils.ts          # 比较大小工具（新增）
-│   ├── estimationUtils.ts          # 估算工具（新增）
 │   └── patternUtils.ts             # 找规律工具（新增）
 │
 └── types/                           # 类型定义
@@ -210,8 +211,104 @@ src/
 
 ### 第三阶段：低优先级知识点
 
-#### 7-10. 其他知识点开发
-- [ ] 按照相同模式开发剩余知识点
+#### 7. 质数与合数开发
+- [ ] 创建 `primeCompositeUtils.ts` 工具函数
+  - [ ] `isPrime(num)` - 判断是否为质数
+  - [ ] `isComposite(num)` - 判断是否为合数
+  - [ ] `getPrimeFactors(num)` - 获取质因数分解
+  - [ ] `getPrimesInRange(min, max)` - 获取范围内的所有质数
+- [ ] 创建 `usePrimeCompositeGenerator.ts` 生成器
+  - [ ] 生成质数/合数判断题目
+  - [ ] 生成质因数分解题目
+  - [ ] 支持难度级别设置
+- [ ] 创建 `PrimeCompositeControlPanel.vue` 控制面板组件
+  - [ ] 题目类型选择（判断质数/合数、质因数分解）
+  - [ ] 数字范围设置
+  - [ ] 题目数量设置
+- [ ] 创建 `PrimeCompositeDisplay.vue` 题目显示组件
+  - [ ] 显示待判断的数字
+  - [ ] 提供质数/合数选择按钮
+  - [ ] 质因数分解输入框
+- [ ] 创建 `PrimeCompositePage.vue` 页面组件
+  - [ ] 集成控制面板和题目显示
+  - [ ] 集成答题和评分功能
+  - [ ] 在 `Home.vue` 中添加质数合数页签
+- [ ] 扩展 `types/index.ts` 添加质数合数相关类型
+- [ ] **个性化辅导计划功能**
+  - [ ] 在 `types/index.ts` 中定义 `PrimeCompositeWrongQuestion`、`PrimeCompositeWrongQuestionStats`、`PrimeCompositeTutoringPlan` 类型
+  - [ ] 在 `useWrongQuestionAnalysis.ts` 中实现 `extractPrimeCompositeWrongQuestions` 和 `calculatePrimeCompositeWrongQuestionStats` 函数
+  - [ ] 在 `useTutoringPlan.ts` 中实现 `generatePrimeCompositeTutoringPlan` 函数
+  - [ ] 创建 `PrimeCompositeWrongQuestionAnalysis.vue` 错题分析组件
+  - [ ] 创建 `PrimeCompositeTutoringPlan.vue` 辅导计划组件
+  - [ ] 在 `PrimeCompositePage.vue` 中集成错题分析和辅导计划功能
+- [ ] 编写单元测试 `primeCompositeUtils.test.ts`
+- [ ] 编写单元测试 `usePrimeCompositeGenerator.test.ts`
+
+#### 8. 比较大小开发
+- [ ] 创建 `comparisonUtils.ts` 工具函数
+  - [ ] `compareIntegers(a, b)` - 比较整数大小
+  - [ ] `compareDecimals(a, b)` - 比较小数大小
+  - [ ] `compareFractions(a, b)` - 比较分数大小
+  - [ ] `compareMixed(a, b)` - 比较混合数大小
+- [ ] 创建 `useComparisonGenerator.ts` 生成器
+  - [ ] 生成整数比较题目
+  - [ ] 生成小数比较题目
+  - [ ] 生成分数比较题目
+  - [ ] 支持难度级别设置
+- [ ] 创建 `ComparisonControlPanel.vue` 控制面板组件
+  - [ ] 数字类型选择（整数、小数、分数）
+  - [ ] 数字范围设置
+  - [ ] 题目数量设置
+- [ ] 创建 `ComparisonDisplay.vue` 题目显示组件
+  - [ ] 显示两个需要比较的数字
+  - [ ] 提供比较符号选择（<、>、=）
+- [ ] 创建 `ComparisonPage.vue` 页面组件
+  - [ ] 集成控制面板和题目显示
+  - [ ] 集成答题和评分功能
+  - [ ] 在 `Home.vue` 中添加比较大小页签
+- [ ] 扩展 `types/index.ts` 添加比较大小相关类型
+- [ ] **个性化辅导计划功能**
+  - [ ] 在 `types/index.ts` 中定义 `ComparisonWrongQuestion`、`ComparisonWrongQuestionStats`、`ComparisonTutoringPlan` 类型
+  - [ ] 在 `useWrongQuestionAnalysis.ts` 中实现 `extractComparisonWrongQuestions` 和 `calculateComparisonWrongQuestionStats` 函数
+  - [ ] 在 `useTutoringPlan.ts` 中实现 `generateComparisonTutoringPlan` 函数
+  - [ ] 创建 `ComparisonWrongQuestionAnalysis.vue` 错题分析组件
+  - [ ] 创建 `ComparisonTutoringPlan.vue` 辅导计划组件
+  - [ ] 在 `ComparisonPage.vue` 中集成错题分析和辅导计划功能
+- [ ] 编写单元测试 `comparisonUtils.test.ts`
+- [ ] 编写单元测试 `useComparisonGenerator.test.ts`
+
+#### 9. 找规律开发
+- [ ] 创建 `patternUtils.ts` 工具函数
+  - [ ] `generateArithmeticSequence(start, diff, count)` - 生成等差数列
+  - [ ] `generateGeometricSequence(start, ratio, count)` - 生成等比数列
+  - [ ] `generateFibonacciSequence(count)` - 生成斐波那契数列
+  - [ ] `generateSquareSequence(count)` - 生成平方数列
+- [ ] 创建 `usePatternGenerator.ts` 生成器
+  - [ ] 生成数字规律填空题目
+  - [ ] 生成图形规律题目（可选）
+  - [ ] 支持难度级别设置
+- [ ] 创建 `PatternControlPanel.vue` 控制面板组件
+  - [ ] 规律类型选择（等差、等比、斐波那契、平方等）
+  - [ ] 数字范围设置
+  - [ ] 题目数量设置
+- [ ] 创建 `PatternDisplay.vue` 题目显示组件
+  - [ ] 显示数列的一部分
+  - [ ] 显示空缺位置
+  - [ ] 提供答案输入框
+- [ ] 创建 `PatternPage.vue` 页面组件
+  - [ ] 集成控制面板和题目显示
+  - [ ] 集成答题和评分功能
+  - [ ] 在 `Home.vue` 中添加找规律页签
+- [ ] 扩展 `types/index.ts` 添加找规律相关类型
+- [ ] **个性化辅导计划功能**
+  - [ ] 在 `types/index.ts` 中定义 `PatternWrongQuestion`、`PatternWrongQuestionStats`、`PatternTutoringPlan` 类型
+  - [ ] 在 `useWrongQuestionAnalysis.ts` 中实现 `extractPatternWrongQuestions` 和 `calculatePatternWrongQuestionStats` 函数
+  - [ ] 在 `useTutoringPlan.ts` 中实现 `generatePatternTutoringPlan` 函数
+  - [ ] 创建 `PatternWrongQuestionAnalysis.vue` 错题分析组件
+  - [ ] 创建 `PatternTutoringPlan.vue` 辅导计划组件
+  - [ ] 在 `PatternPage.vue` 中集成错题分析和辅导计划功能
+- [ ] 编写单元测试 `patternUtils.test.ts`
+- [ ] 编写单元测试 `usePatternGenerator.test.ts`
 
 ## 通用功能复用
 
@@ -312,6 +409,6 @@ export interface PercentageQuestion {
 
 - **第一阶段**（高优先级）：预计 2-3 天
 - **第二阶段**（中优先级）：预计 3-4 天
-- **第三阶段**（低优先级）：预计 2-3 天
+- **第三阶段**（低优先级）：预计 2 天
 
-**总计**：预计 7-10 天完成所有知识点开发
+**总计**：预计 7-9 天完成所有知识点开发

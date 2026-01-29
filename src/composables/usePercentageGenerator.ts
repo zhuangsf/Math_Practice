@@ -66,10 +66,10 @@ function generatePercentToDecimalQuestion(config: PercentageConfig): PercentageQ
 
 /**
  * Generate a fraction to percent conversion question
- * @param config Percentage configuration
+ * @param _config Percentage configuration (unused, for type consistency)
  * @returns Percentage question or null if unable to generate
  */
-function generateFractionToPercentQuestion(config: PercentageConfig): PercentageQuestion | null {
+function generateFractionToPercentQuestion(_config: PercentageConfig): PercentageQuestion | null {
   // modify by jx: generate fraction to percent conversion question
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const denominator = randomInt(2, 20);
@@ -109,10 +109,10 @@ function generatePercentToFractionQuestion(config: PercentageConfig): Percentage
 
 /**
  * Generate a find percent question (what percent is A of B)
- * @param config Percentage configuration
+ * @param _config Percentage configuration (unused, for type consistency)
  * @returns Percentage question or null if unable to generate
  */
-function generateFindPercentQuestion(config: PercentageConfig): PercentageQuestion | null {
+function generateFindPercentQuestion(_config: PercentageConfig): PercentageQuestion | null {
   // modify by jx: generate find percent application question
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     const total = randomInt(10, 100);

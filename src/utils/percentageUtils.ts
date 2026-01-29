@@ -123,13 +123,26 @@ export function formatPercent(percent: number, decimalPlaces: number = 0): strin
 }
 
 /**
- * Parse percentage answer from string
- * @param answer Answer string (e.g., "75%", "75", "0.75")
+ * Parse percentage value from various input types
+ * @param answer Answer in various formats (string "75%", "75", "0.75" or number 75, 0.75)
  * @returns Percentage number (e.g., 75 for 75%)
  */
-export function parsePercentAnswer(answer: string): number {
-  // modify by jx: parse percentage answer from various formats
-  const cleaned = answer.trim();
+function parsePercentValue(answer: string | number): number {
+  // modify by jx: parse percentage value from various input formats
+  
+  // Handle number input
+  if (typeof answer === 'number') {
+    // If number is between 0 and 1 (exclusive of 0), treat as decimal representation
+    // e.g., 0.75 represents 75%, so return 75
+    if (answer > 0 && answer <= 1) {
+      return answer * 100;
+    }
+    // Otherwise treat as percentage value directly
+    return answer;
+  }
+  
+  // Handle string input
+  const cleaned = answer.toString().trim();
   
   // If contains %, parse as percentage
   if (cleaned.includes('%')) {
@@ -155,6 +168,16 @@ export function parsePercentAnswer(answer: string): number {
 }
 
 /**
+ * Parse percentage answer from string
+ * @param answer Answer string (e.g., "75%", "75", "0.75")
+ * @returns Percentage number (e.g., 75 for 75%)
+ */
+export function parsePercentAnswer(answer: string): number {
+  // modify by jx: parse percentage answer from various formats
+  return parsePercentValue(answer);
+}
+
+/**
  * Validate percentage answer
  * @param studentAnswer Student's answer
  * @param correctAnswer Correct answer
@@ -167,20 +190,8 @@ export function validatePercentAnswer(
   tolerance: number = 0.01
 ): boolean {
   // modify by jx: validate percentage answer with tolerance
-  let studentNum: number;
-  let correctNum: number;
-  
-  if (typeof studentAnswer === 'string') {
-    studentNum = parsePercentAnswer(studentAnswer);
-  } else {
-    studentNum = studentAnswer;
-  }
-  
-  if (typeof correctAnswer === 'string') {
-    correctNum = parsePercentAnswer(correctAnswer);
-  } else {
-    correctNum = correctAnswer;
-  }
+  const studentNum = parsePercentValue(studentAnswer);
+  const correctNum = parsePercentValue(correctAnswer);
   
   return Math.abs(studentNum - correctNum) <= tolerance;
 }

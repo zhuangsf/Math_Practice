@@ -210,7 +210,7 @@ export function generateGeometryQuestions(config: GeometryConfig): GeometryQuest
   while (questions.length < config.questionCount && attempts < maxAttempts) {
     attempts++;
     const combination = validCombinations[Math.floor(Math.random() * validCombinations.length)];
-    const question = generateGeometryQuestion(combination.shape, combination.calculationType, config);
+    const question = generateGeometryQuestion(combination.shape as 'rectangle' | 'square' | 'triangle' | 'circle' | 'cuboid' | 'cube', combination.calculationType as 'perimeter' | 'area' | 'volume', config);
     if (question) {
       questions.push(question);
     }
