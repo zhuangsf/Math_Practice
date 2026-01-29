@@ -13,13 +13,14 @@
     "test:ui": "vitest --ui",
     "electron:dev": "electron .",
     "electron:build": "npm run build && electron-builder",
-    "electron:build:win": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win --x64 --ia32",
-    "electron:build:win:portable": "npm run build && set CSC_IDENTITY_AUTO_DISCOVERY=false && electron-builder --win portable --config.win.sign=null --x64 --ia32"
+    "electron:build:win": "npm run build && electron-builder --win --x64 --ia32",
+    "electron:build:win:portable": "npm run build && electron-builder --win portable --x64 --ia32"
   },
   "dependencies": {
     "element-plus": "^2.6.0",
     "jspdf": "^2.5.1",
-    "vue": "^3.4.21"
+    "vue": "^3.4.21",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20.11.19",

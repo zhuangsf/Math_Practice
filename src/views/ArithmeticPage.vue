@@ -25,6 +25,7 @@
         @generate="handleGenerate"
         @export-txt="handleExportTxt"
         @export-pdf="handleExportPdf"
+        @export-excel="handleExportExcel"
         @print="handlePrint"
       />
     </div>
@@ -121,7 +122,8 @@ const answerMode = ref<'practice' | 'answering'>('practice');
 const { isGenerating, questions, generateQuestions, clearQuestions } = useQuestionGenerator();
 
 // Use export composable
-const { isExporting, exportToTxt, exportToPdf, printQuestions } = useExport();
+// modify by jx: add exportToExcel to the export composable destructuring
+const { isExporting, exportToTxt, exportToPdf, exportToExcel, printQuestions } = useExport();
 
 // Use answering composable
 const {
@@ -317,6 +319,22 @@ const handleExportPdf = (includeAnswers: boolean) => {
   } catch (error) {
     console.error('Export PDF error:', error);
     ElMessage.error('导出PDF失败');
+  }
+};
+
+// Handle export Excel
+// modify by jx: add Excel export handler for arithmetic questions
+const handleExportExcel = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportToExcel(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    ElMessage.error('导出Excel失败');
   }
 };
 

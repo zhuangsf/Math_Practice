@@ -25,6 +25,7 @@
         @generate="handleGenerate"
         @export-txt="handleExportTxt"
         @export-pdf="handleExportPdf"
+        @export-excel="handleExportExcel"
         @print="handlePrint"
       />
     </div>
@@ -119,7 +120,7 @@ const answerMode = ref<'practice' | 'answering'>('practice');
 const { isGenerating, questions, generate, clear } = usePercentageGenerator();
 
 // Use export composable
-const { isExporting, exportPercentageToTxt, exportPercentageToPdf, printPercentage } = useExport();
+const { isExporting, exportPercentageToTxt, exportPercentageToPdf, exportPercentageToExcel, printPercentage } = useExport();
 
 // Answering state
 const isSubmitted = ref(false);
@@ -356,6 +357,22 @@ const handleExportPdf = (includeAnswers: boolean) => {
   } catch (error) {
     console.error('Export PDF error:', error);
     ElMessage.error('导出PDF失败');
+  }
+};
+
+// Handle export Excel
+// modify by jx: add Excel export handler for percentage questions
+const handleExportExcel = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportPercentageToExcel(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    ElMessage.error('导出Excel失败');
   }
 };
 

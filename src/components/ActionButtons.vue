@@ -34,6 +34,17 @@
     </el-button>
 
     <el-button
+      type="success"
+      size="large"
+      :disabled="!hasQuestions || isExporting"
+      :loading="isExporting"
+      @click="handleExportExcel"
+    >
+      <el-icon><Grid /></el-icon>
+      导出Excel
+    </el-button>
+
+    <el-button
       type="info"
       size="large"
       :disabled="!hasQuestions || isExporting"
@@ -68,7 +79,7 @@
 
 import { ref, computed } from 'vue';
 import { ElMessage } from 'element-plus';
-import { MagicStick, Document, DocumentCopy, Printer } from '@element-plus/icons-vue';
+import { MagicStick, Document, DocumentCopy, Printer, Grid } from '@element-plus/icons-vue';
 import type { Question } from '@/types';
 
 // Define props and emits
@@ -83,13 +94,14 @@ const emit = defineEmits<{
   (e: 'generate'): void;
   (e: 'exportTxt', includeAnswers: boolean): void;
   (e: 'exportPdf', includeAnswers: boolean): void;
+  (e: 'exportExcel', includeAnswers: boolean): void;
   (e: 'print', includeAnswers: boolean): void;
 }>();
 
 // Export dialog state
 const showExportDialog = ref(false);
 const exportIncludeAnswers = ref(false);
-let pendingExportType: 'txt' | 'pdf' | 'print' | null = null;
+let pendingExportType: 'txt' | 'pdf' | 'excel' | 'print' | null = null;
 
 // Check if there are questions to export
 const hasQuestions = computed(() => props.questions.length > 0);
@@ -113,6 +125,14 @@ const handleExportPdf = () => {
   showExportDialog.value = true;
 };
 
+// Handle export Excel button click
+// modify by jx: add Excel export button click handler
+const handleExportExcel = () => {
+  pendingExportType = 'excel';
+  exportIncludeAnswers.value = props.showAnswers;
+  showExportDialog.value = true;
+};
+
 // Handle print button click
 const handlePrint = () => {
   pendingExportType = 'print';
@@ -121,6 +141,7 @@ const handlePrint = () => {
 };
 
 // Confirm export
+// modify by jx: add Excel export handling in confirm export function
 const confirmExport = () => {
   showExportDialog.value = false;
 
@@ -133,6 +154,10 @@ const confirmExport = () => {
       case 'pdf':
         emit('exportPdf', exportIncludeAnswers.value);
         ElMessage.success('PDF文件导出成功');
+        break;
+      case 'excel':
+        emit('exportExcel', exportIncludeAnswers.value);
+        ElMessage.success('Excel文件导出成功');
         break;
       case 'print':
         emit('print', exportIncludeAnswers.value);

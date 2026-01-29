@@ -24,6 +24,7 @@
         @generate="handleGenerate"
         @export-txt="handleExportTxt"
         @export-pdf="handleExportPdf"
+        @export-excel="handleExportExcel"
         @print="handlePrint"
       />
     </div>
@@ -64,9 +65,11 @@ const showAnswers = ref(false);
 const { isGenerating, equations, generateEquations, clearEquations } = useEquationGenerator();
 
 // Use export composable
-const { isExporting, exportEquationsToTxt, exportEquationsToPdf, printEquations } = useExport();
+// modify by jx: add exportEquationsToExcel to the export composable destructuring
+const { isExporting, exportEquationsToTxt, exportEquationsToPdf, exportEquationsToExcel, printEquations } = useExport();
 
 // Convert equations to questions format for export
+// modify by jx: convert to Question[] format for ActionButtons component
 const equationsAsQuestions = computed<Question[]>(() => {
   return equations.value.map(eq => ({
     id: eq.id,
@@ -106,7 +109,7 @@ const handleExportTxt = (includeAnswers: boolean) => {
   }
 
   try {
-    exportEquationsToTxt(equationsAsQuestions.value, includeAnswers);
+    exportEquationsToTxt(equations.value, includeAnswers);
   } catch (error) {
     console.error('Export TXT error:', error);
     ElMessage.error('导出TXT失败');
@@ -121,10 +124,26 @@ const handleExportPdf = (includeAnswers: boolean) => {
   }
 
   try {
-    exportEquationsToPdf(equationsAsQuestions.value, includeAnswers);
+    exportEquationsToPdf(equations.value, includeAnswers);
   } catch (error) {
     console.error('Export PDF error:', error);
     ElMessage.error('导出PDF失败');
+  }
+};
+
+// Handle export Excel
+// modify by jx: add Excel export handler for equation questions
+const handleExportExcel = (includeAnswers: boolean) => {
+  if (equations.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportEquationsToExcel(equations.value, includeAnswers);
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    ElMessage.error('导出Excel失败');
   }
 };
 
@@ -136,7 +155,7 @@ const handlePrint = (includeAnswers: boolean) => {
   }
 
   try {
-    printEquations(equationsAsQuestions.value, includeAnswers);
+    printEquations(equations.value, includeAnswers);
   } catch (error) {
     console.error('Print error:', error);
     ElMessage.error('打印失败');

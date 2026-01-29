@@ -1,8 +1,9 @@
-// Composable for export functionality (TXT, PDF, Print)
-// modify by jx: implement export functions for all question types to TXT, PDF and print
+// Composable for export functionality (TXT, PDF, Excel, Print)
+// modify by jx: implement export functions for all question types to TXT, PDF, Excel and print
 
 import { ref } from 'vue';
 import jsPDF from 'jspdf';
+import * as XLSX from 'xlsx';
 import type {
   Question,
   EquationQuestion,
@@ -2749,51 +2750,592 @@ export function useExport() {
     }
   };
 
+  /**
+   * Download Excel file from workbook
+   * @param workbook XLSX workbook
+   * @param filename Filename without extension
+   */
+  function downloadExcel(workbook: XLSX.WorkBook, filename: string): void {
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = generateFilename('xlsx', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Export arithmetic questions to Excel file
+   * modify by jx: implement Excel export function for arithmetic questions
+   */
+  const exportToExcel = (questions: Question[], includeAnswers: boolean, title: string = '四则运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyArithmeticQuestion(q, i));
+
+      // Create data array for Excel
+      const data: (string | number | undefined)[][] = [];
+
+      // Add header row
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      // Add data rows
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      // Create worksheet and workbook
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+
+      // Download Excel file
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export equation questions to Excel file
+   * modify by jx: implement Excel export function for equation questions
+   */
+  const exportEquationsToExcel = (questions: EquationQuestion[], includeAnswers: boolean, title: string = '一元一次方程题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export fraction questions to Excel file
+   * modify by jx: implement Excel export function for fraction questions
+   */
+  const exportFractionsToExcel = (questions: FractionQuestion[], includeAnswers: boolean, title: string = '分数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyFractionQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export decimal questions to Excel file
+   * modify by jx: implement Excel export function for decimal questions
+   */
+  const exportDecimalsToExcel = (questions: DecimalQuestion[], includeAnswers: boolean, title: string = '小数运算题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyDecimalQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export geometry questions to Excel file
+   * modify by jx: implement Excel export function for geometry questions
+   */
+  const exportGeometryToExcel = (questions: GeometryQuestion[], includeAnswers: boolean, title: string = '几何计算题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyGeometryQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export percentage questions to Excel file
+   * modify by jx: implement Excel export function for percentage questions
+   */
+  const exportPercentageToExcel = (questions: PercentageQuestion[], includeAnswers: boolean, title: string = '百分数题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyPercentageQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export unit conversion questions to Excel file
+   * modify by jx: implement Excel export function for unit conversion questions
+   */
+  const exportUnitConversionToExcel = (questions: UnitConversionQuestion[], includeAnswers: boolean, title: string = '单位换算题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyUnitConversionQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export factor multiple questions to Excel file
+   * modify by jx: implement Excel export function for factor multiple questions
+   */
+  const exportFactorMultipleToExcel = (questions: FactorMultipleQuestion[], includeAnswers: boolean, title: string = '倍数与因数题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyFactorMultipleQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export comparison questions to Excel file
+   * modify by jx: implement Excel export function for comparison questions
+   */
+  const exportComparisonToExcel = (questions: ComparisonQuestion[], includeAnswers: boolean, title: string = '比较大小题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyComparisonQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} (${question.answer})`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export pattern questions to Excel file
+   * modify by jx: implement Excel export function for pattern questions
+   */
+  const exportPatternToExcel = (questions: PatternQuestion[], includeAnswers: boolean, title: string = '找规律题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyPatternQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
+  /**
+   * Export prime composite questions to Excel file
+   * modify by jx: implement Excel export function for prime composite questions
+   */
+  const exportPrimeCompositeToExcel = (questions: PrimeCompositeQuestion[], includeAnswers: boolean, title: string = '质数与合数题目') => {
+    isExporting.value = true;
+
+    try {
+      const unifiedQuestions = questions.map((q, i) => unifyPrimeCompositeQuestion(q, i));
+
+      const data: (string | number | undefined)[][] = [];
+
+      if (includeAnswers) {
+        data.push(['题号', '题目', '答案']);
+      } else {
+        data.push(['题号', '题目']);
+      }
+
+      for (const question of unifiedQuestions) {
+        if (includeAnswers) {
+          data.push([
+            question.questionNumber,
+            `${question.expression} = ${question.answer}`,
+            undefined
+          ]);
+        } else {
+          data.push([
+            question.questionNumber,
+            question.expression,
+            undefined
+          ]);
+        }
+      }
+
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, title);
+      downloadExcel(workbook, title);
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      throw error;
+    } finally {
+      isExporting.value = false;
+    }
+  };
+
   return {
     isExporting,
     // Arithmetic exports (original functions)
     exportToTxt,
     exportToPdf,
+    exportToExcel,
     printQuestions,
     // Equation exports
     exportEquationsToTxt,
     exportEquationsToPdf,
+    exportEquationsToExcel,
     printEquations,
     // Fraction exports
     exportFractionsToTxt,
     exportFractionsToPdf,
+    exportFractionsToExcel,
     printFractions,
     // Decimal exports
     exportDecimalsToTxt,
     exportDecimalsToPdf,
+    exportDecimalsToExcel,
     printDecimals,
     // Geometry exports
     exportGeometryToTxt,
     exportGeometryToPdf,
+    exportGeometryToExcel,
     printGeometry,
     // Percentage exports
     exportPercentageToTxt,
     exportPercentageToPdf,
+    exportPercentageToExcel,
     printPercentage,
     // Unit conversion exports
     exportUnitConversionToTxt,
     exportUnitConversionToPdf,
+    exportUnitConversionToExcel,
     printUnitConversion,
     // Factor multiple exports
     exportFactorMultipleToTxt,
     exportFactorMultipleToPdf,
+    exportFactorMultipleToExcel,
     printFactorMultiple,
     // Comparison exports
     exportComparisonToTxt,
     exportComparisonToPdf,
+    exportComparisonToExcel,
     printComparison,
     // Pattern exports
     exportPatternToTxt,
     exportPatternToPdf,
+    exportPatternToExcel,
     printPattern,
     // Prime composite exports
     exportPrimeCompositeToTxt,
     exportPrimeCompositeToPdf,
+    exportPrimeCompositeToExcel,
     printPrimeComposite
   };
 }

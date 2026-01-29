@@ -25,6 +25,7 @@
         @generate="handleGenerate"
         @export-txt="handleExportTxt"
         @export-pdf="handleExportPdf"
+        @export-excel="handleExportExcel"
         @print="handlePrint"
       />
     </div>
@@ -119,7 +120,7 @@ const answerMode = ref<'practice' | 'answering'>('practice');
 const { isGenerating, questions, generate, clear } = usePrimeCompositeGenerator();
 
 // Use export composable
-const { isExporting, exportPrimeCompositeToTxt, exportPrimeCompositeToPdf, printPrimeComposite } = useExport();
+const { isExporting, exportPrimeCompositeToTxt, exportPrimeCompositeToPdf, exportPrimeCompositeToExcel, printPrimeComposite } = useExport();
 
 // Answering state
 const isSubmitted = ref(false);
@@ -382,6 +383,22 @@ const handleExportPdf = (includeAnswers: boolean) => {
   } catch (error) {
     console.error('Export PDF error:', error);
     ElMessage.error('导出PDF失败');
+  }
+};
+
+// Handle export Excel
+// modify by jx: add Excel export handler for prime composite questions
+const handleExportExcel = (includeAnswers: boolean) => {
+  if (questions.value.length === 0) {
+    ElMessage.warning('请先生成题目');
+    return;
+  }
+
+  try {
+    exportPrimeCompositeToExcel(questions.value, includeAnswers);
+  } catch (error) {
+    console.error('Export Excel error:', error);
+    ElMessage.error('导出Excel失败');
   }
 };
 
