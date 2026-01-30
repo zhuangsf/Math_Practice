@@ -27,8 +27,7 @@
         :class="{ 'is-loading': isSubmitting }"
         @click="handleSubmit"
       >
-        <span class="spinner-placeholder"></span>
-        <span class="btn-text">提交答案 (Enter)</span>
+        <span class="btn-content">提交答案 (Enter)</span>
       </el-button>
     </div>
 
@@ -215,36 +214,74 @@ defineExpose({
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
 }
 
-/* Layout: spinner on left, text on right */
-.submit-button .spinner-placeholder {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-
-.submit-button .btn-text {
-  flex: 1;
-  text-align: center;
-}
-
 /* Hide Element Plus loading spinner */
 .submit-button .el-loading-spinner {
   display: none !important;
 }
 
-/* Custom loading spinner */
-.submit-button.is-loading .spinner-placeholder::before {
-  content: '';
-  display: block;
-  width: 16px;
-  height: 16px;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 1024 1024' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23ffffff' d='M512 64a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V96a32 32 0 0 1 32-32zm0 640a32 32 0 0 1 32 32v192a32 32 0 0 1-64 0V736a32 32 0 0 1 32-32zm448-192a32 32 0 0 1-32 32H736a32 32 0 0 1 0-64h192a32 32 0 0 1 32 32zm-640 0a32 32 0 0 1-32 32H96a32 32 0 0 1 0-64h192a32 32 0 0 1 32 32zm448 192a32 32 0 0 1-32 32h-192a32 32 0 0 1 0-64h192a32 32 0 0 1 32 32zm-448-640a32 32 0 0 1-32 32H96a32 32 0 0 1 0-64h192a32 32 0 0 1 32 32zm192 320a32 32 0 0 1-32 32H288a32 32 0 0 1 0-64h416a32 32 0 0 1 32 32zm-192-192a32 32 0 0 1-32 32H96a32 32 0 0 1 0-64h416a32 32 0 0 1 32 32z'/%3E%3C/svg%3E") center/contain no-repeat;
-  animation: spin 1s linear infinite;
+/* When loading: disable button and hide text */
+.submit-button.is-loading {
+  pointer-events: none;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.submit-button.is-loading .btn-content {
+  visibility: hidden;
+}
+
+/* Custom loading spinner with cool effect - centered */
+.submit-button.is-loading::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-right-color: rgba(255, 255, 255, 0.6);
+  border-radius: 50%;
+  animation: cool-spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.submit-button.is-loading::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-bottom-color: rgba(64, 158, 255, 0.9);
+  border-left-color: rgba(64, 158, 255, 0.6);
+  border-radius: 50%;
+  animation: cool-spin-reverse 0.6s linear infinite;
+  animation-delay: 0.1s;
+}
+
+@keyframes cool-spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+    box-shadow: 0 0 0 0 rgba(64, 158, 255, 0.4);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(180deg);
+    box-shadow: 0 0 10px 5px rgba(64, 158, 255, 0.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+    box-shadow: 0 0 0 0 rgba(64, 158, 255, 0.4);
+  }
+}
+
+@keyframes cool-spin-reverse {
+  from {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
 }
 
 .keyboard-hints {
