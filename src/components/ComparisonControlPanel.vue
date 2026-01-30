@@ -4,10 +4,10 @@
     <div class="control-section">
       <h3 class="section-title">题目类型</h3>
       <el-checkbox-group v-model="config.questionTypes" size="large">
-        <el-checkbox-button label="integer">整数比较</el-checkbox-button>
-        <el-checkbox-button label="decimal">小数比较</el-checkbox-button>
-        <el-checkbox-button label="fraction">分数比较</el-checkbox-button>
-        <el-checkbox-button label="decimal-fraction">小数与分数比较</el-checkbox-button>
+        <el-checkbox-button value="integer">整数比较</el-checkbox-button>
+        <el-checkbox-button value="decimal">小数比较</el-checkbox-button>
+        <el-checkbox-button value="fraction">分数比较</el-checkbox-button>
+        <el-checkbox-button value="decimal-fraction">小数与分数比较</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.questionTypes.length === 0" class="warning-text">
         请至少选择一种题目类型
@@ -69,9 +69,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -79,8 +79,8 @@
     <div class="control-section">
       <h3 class="section-title">答题模式</h3>
       <el-radio-group v-model="answerMode" size="large">
-        <el-radio-button label="practice">练习模式</el-radio-button>
-        <el-radio-button label="answering">答题模式</el-radio-button>
+        <el-radio-button value="practice">练习模式</el-radio-button>
+        <el-radio-button value="answering">答题模式</el-radio-button>
       </el-radio-group>
       <div class="mode-description">
         <span v-if="answerMode === 'practice'">练习模式：仅显示题目，适合打印和导出</span>

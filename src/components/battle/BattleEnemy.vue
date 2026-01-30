@@ -1,7 +1,10 @@
 <template>
   <div
     class="battle-enemy"
-    :class="{ 'is-hit': isHit, 'is-attacking': isAttacking }"
+    :class="[
+      { 'is-attacking': isAttacking },
+      animationKey > 0 ? `hit-anim-${animationKey}` : ''
+    ]"
   >
     <div class="enemy-container">
       <!-- Energy ball visual -->
@@ -45,7 +48,7 @@
 <script setup lang="ts">
 // modify by jx: implement battle enemy (energy ball) display component with animations
 
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, nextTick } from 'vue';
 
 interface Props {
   hp: number;
@@ -53,6 +56,7 @@ interface Props {
   attack: number;
   isHit?: boolean;
   isAttacking?: boolean;
+  shakeEnabled?: boolean;  // modify by jx: control shake animation
 }
 
 interface Emits {
@@ -62,7 +66,8 @@ interface Emits {
 
 const props = withDefaults(defineProps<Props>(), {
   isHit: false,
-  isAttacking: false
+  isAttacking: false,
+  shakeEnabled: false  // modify by jx: default off to disable energy orb shake after starting battle
 });
 
 const emit = defineEmits<Emits>();
@@ -72,15 +77,72 @@ const showDamage = ref(false);
 const damageValue = ref(0);
 const damageType = ref<'damage' | 'buff'>('damage');
 
+// Animation trigger state - modify by jx: use unique animation key for replay; template adds hit-anim-* only when >0 to avoid shake on mount
+const animationKey = ref(0);
+
+// Component ready state - modify by jx: prevent animation on initial mount
+const isComponentReady = ref(false);
+
+// Mark component as ready after mount
+onMounted(() => {
+  console.log('[BattleEnemy][SHAKE_DEBUG] onMounted start', { shakeEnabled: props.shakeEnabled, animationKey: animationKey.value, ts: Date.now() });
+  // Use nextTick to ensure DOM is fully rendered
+  nextTick(() => {
+    isComponentReady.value = true;
+    // modify by jx: when shake enabled, play one entrance shake on start battle (animationKey=1 adds hit-anim-1, no emit)
+    if (props.shakeEnabled) {
+      animationKey.value = 1;
+    }
+    console.log('[BattleEnemy][SHAKE_DEBUG] component ready', { isComponentReady: isComponentReady.value, shakeEnabled: props.shakeEnabled, animationKey: animationKey.value, ts: Date.now() });
+  });
+});
+
 // Watch for hit animation
-watch(() => props.isHit, (newVal) => {
+// #region BattleEnemy debug logging - modify by jx: key info for shake debug
+watch(() => props.isHit, (newVal, oldVal) => {
+  console.log('[BattleEnemy][SHAKE_DEBUG] isHit changed', {
+    newVal,
+    oldVal,
+    animationKey: animationKey.value,
+    isComponentReady: isComponentReady.value,
+    shakeEnabled: props.shakeEnabled,
+    willSkipNotReady: !isComponentReady.value,
+    willSkipInitialMount: oldVal === undefined && newVal === false,
+    ts: Date.now()
+  });
+
+  // modify by jx: skip if component not ready yet (prevent animation on initial mount)
+  if (!isComponentReady.value) {
+    console.log('[BattleEnemy][SHAKE_DEBUG] SKIP: component not ready (no shake)');
+    return;
+  }
+
+  // modify by jx: skip if this is initial mount (oldVal is undefined)
+  if (oldVal === undefined && newVal === false) {
+    console.log('[BattleEnemy][SHAKE_DEBUG] SKIP: initial mount (no shake)');
+    return;
+  }
+
+  // modify by jx: on correct answer (isHit true) always play hit shake + damage popup; shakeEnabled only controls entrance shake in onMounted
   if (newVal) {
+    const nextKey = animationKey.value + 1;
+    console.log('[BattleEnemy][SHAKE_DEBUG] PLAY: clearing class then re-add', { prevKey: animationKey.value, nextKey, ts: Date.now() });
+    // modify by jx: remove hit-anim class then re-add next frame so browser restarts animation (same animation name does not replay otherwise)
+    animationKey.value = 0;
+    requestAnimationFrame(() => {
+      animationKey.value = nextKey;
+      console.log('[BattleEnemy][SHAKE_DEBUG] rAF done: animationKey set to', nextKey, 'class should be hit-anim-' + nextKey, { ts: Date.now() });
+    });
+
     showDamagePopup(calculateDamage(), 'damage');
     setTimeout(() => {
       emit('hitAnimationEnd');
     }, 300);
+  } else {
+    console.log('[BattleEnemy][SHAKE_DEBUG] isHit false, no animation');
   }
 });
+// #endregion
 
 // Watch for attack animation
 watch(() => props.isAttacking, (newVal) => {
@@ -204,13 +266,13 @@ function showDamagePopup(value: number, type: 'damage' | 'buff') {
   animation-delay: 1.5s;
 }
 
-/* Hit animation */
-.battle-enemy.is-hit .energy-core {
-  animation: hit-flash 0.3s ease;
+/* Hit animation - modify by jx: use hit-anim-* pattern for animation replay */
+.battle-enemy[class*="hit-anim-"] {
+  animation: hit-shake 0.3s ease;
 }
 
-.battle-enemy.is-hit .energy-ball {
-  animation: hit-shake 0.3s ease;
+.battle-enemy[class*="hit-anim-"] .energy-core {
+  animation: hit-flash 0.3s ease;
 }
 
 /* Attack animation */
@@ -361,11 +423,23 @@ function showDamagePopup(value: number, type: 'damage' | 'buff') {
 }
 
 @keyframes attack-lunge {
-  0%, 100% {
-    transform: translateY(0);
+  0% {
+    transform: translateY(0) translateX(0);
   }
-  50% {
-    transform: translateY(-20px);
+  20% {
+    transform: translateY(-15px) translateX(-8px);
+  }
+  40% {
+    transform: translateY(-25px) translateX(8px);
+  }
+  60% {
+    transform: translateY(-20px) translateX(-5px);
+  }
+  80% {
+    transform: translateY(-15px) translateX(5px);
+  }
+  100% {
+    transform: translateY(0) translateX(0);
   }
 }
 

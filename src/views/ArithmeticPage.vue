@@ -3,8 +3,19 @@
     
     <!-- Header -->
     <div class="header">
-      <h2 class="title">四则运算题目生成</h2>
-      <p class="subtitle">支持加减乘除多种运算模式</p>
+      <div class="header-left">
+        <h2 class="title">四则运算题目生成</h2>
+        <p class="subtitle">支持加减乘除多种运算模式</p>
+      </div>
+      <div class="header-right">
+        <el-button
+          class="settings-button"
+          circle
+          @click="showSettingsDialog = true"
+        >
+          <el-icon><Setting /></el-icon>
+        </el-button>
+      </div>
     </div>
 
     <!-- Control Panel -->
@@ -39,13 +50,14 @@
         :total-questions="battleConfig.questionCount"
       />
 
-      <!-- Battle Enemy -->
+      <!-- Battle Enemy - modify by jx: pass shake-enabled for entrance shake; hit shake always plays on correct answer -->
       <BattleEnemy
         :hp="battleState.enemyHP"
         :max-hp="battleConfig.enemyHP"
         :attack="battleState.enemyAttack"
         :is-hit="isEnemyHit"
         :is-attacking="isEnemyAttacking"
+        :shake-enabled="shakeEnabled"
         @hit-animation-end="isEnemyHit = false"
         @attack-animation-end="isEnemyAttacking = false"
       />
@@ -56,13 +68,13 @@
         :max-time="battleConfig.questionTime"
       />
 
-      <!-- Battle Question -->
+      <!-- Battle Question - modify by jx: wrap submit to log when event is received -->
       <BattleQuestion
         v-if="battleState.currentQuestion"
         :question="battleState.currentQuestion"
         :question-number="battleState.questionCount + 1"
         :is-submitting="isSubmittingAnswer"
-        @submit="handleBattleAnswer"
+        @submit="onBattleQuestionSubmit"
         @retreat="handleRetreat"
         ref="battleQuestionRef"
       />
@@ -142,13 +154,21 @@
       />
     </div>
 
-    <!-- Battle Result Dialog -->
+    <!-- Battle Result Dialog: only render when record and result exist to avoid null prop warning -->
     <BattleResult
+      v-if="battleRecord && battleResult"
       v-model="showBattleResult"
-      :record="battleRecord!"
-      :result="battleResult!"
+      :record="battleRecord"
+      :result="battleResult"
       @rematch="handleRematch"
       @return="handleReturnFromBattle"
+    />
+
+    <!-- Settings Dialog -->
+    <SettingsDialog
+      v-model="showSettingsDialog"
+      v-model:shake-enabled="shakeEnabled"
+      @confirm="handleSettingsConfirm"
     />
   </div>
 </template>
@@ -158,6 +178,7 @@
 
 import { ref, computed, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
+import { Setting } from '@element-plus/icons-vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import QuestionDisplay from '@/components/QuestionDisplay.vue';
 import ActionButtons from '@/components/ActionButtons.vue';
@@ -169,6 +190,7 @@ import BattleEnemy from '@/components/battle/BattleEnemy.vue';
 import BattleTimer from '@/components/battle/BattleTimer.vue';
 import BattleQuestion from '@/components/battle/BattleQuestion.vue';
 import BattleResult from '@/components/battle/BattleResult.vue';
+import SettingsDialog from '@/components/SettingsDialog.vue';
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
 import { useExport } from '@/composables/useExport';
 import { useAnswering } from '@/composables/useAnswering';
@@ -176,6 +198,7 @@ import { calculateScore } from '@/composables/useScoring';
 import { extractWrongQuestions, calculateWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
 import { generateTutoringPlan } from '@/composables/useTutoringPlan';
 import { useBattleEngine } from '@/composables/useBattleEngine';
+import { useGameSettings } from '@/composables/useGameSettings';
 import type { QuestionConfig, ScoreResult, WrongQuestionStats, WrongQuestion, TutoringPlan, BattleConfig, BattleSettings, BattleRecord, BattleResult as BattleResultType } from '@/types';
 
 // Debug logging
@@ -213,6 +236,20 @@ const answerMode = ref<'practice' | 'answering' | 'battle'>('practice');
 const battleSettings = ref<BattleSettings>({
   enemyHP: 50,
   questionTime: 10.0
+});
+
+// Settings state
+const showSettingsDialog = ref(false);
+
+// Get game settings - modify by jx: use global settings state with proper reactivity
+const gameSettingsRef = useGameSettings();
+const shakeEnabled = computed({
+  get: () => gameSettingsRef.value?.shakeEnabled ?? false,  // modify by jx: default off to disable energy orb shake after starting battle
+  set: (val: boolean) => {
+    if (gameSettingsRef.value) {
+      gameSettingsRef.value.shakeEnabled = val;
+    }
+  }
 });
 
 // Battle configuration based on settings
@@ -290,16 +327,43 @@ function handleStartBattle() {
   ElMessage.info('准备进入战斗！');
 }
 
+// Settings handlers
+function handleSettingsConfirm(settings: { shakeEnabled: boolean }) {
+  console.log('[ArithmeticPage] Settings confirmed:', settings);
+  console.log('[ArithmeticPage] Current global shakeEnabled:', gameSettingsRef.value?.shakeEnabled);
+  ElMessage.success('设置已保存');
+}
+
+// modify by jx: wrapper so we always log when BattleQuestion emits submit (proves event reached parent)
+function onBattleQuestionSubmit(answer: number | null) {
+  console.log('[ArithmeticPage][SHAKE_DEBUG] onBattleQuestionSubmit received', { answer, ts: Date.now() });
+  handleBattleAnswer(answer);
+}
+
 function handleBattleAnswer(answer: number | null) {
-  if (!battleEngine.value || isSubmittingAnswer.value) return;
-  
+  console.log('[ArithmeticPage][SHAKE_DEBUG] handleBattleAnswer called', { answer, ts: Date.now() });
+  if (!battleEngine.value || isSubmittingAnswer.value) {
+    console.log('[ArithmeticPage][SHAKE_DEBUG] early return', { hasEngine: !!battleEngine.value, isSubmitting: isSubmittingAnswer.value });
+    return;
+  }
+
+  // modify by jx: save expected answer BEFORE submitAnswer (submitAnswer advances currentQuestion to next)
+  const expectedAnswer = battleEngine.value.state.currentQuestion?.answer ?? null;
+  const isCorrect = answer !== null && answer === expectedAnswer;
+  console.log('[ArithmeticPage][SHAKE_DEBUG] before submitAnswer', { answer, expectedAnswer, isCorrect, ts: Date.now() });
+
   isSubmittingAnswer.value = true;
-  
   const result = battleEngine.value.submitAnswer(answer);
-  
+
+  console.log('[ArithmeticPage][SHAKE_DEBUG] after submitAnswer', { result, isCorrect, enemyHP: battleEngine.value.state.enemyHP, ts: Date.now() });
+
   if (result && battleEngine.value.state.enemyHP <= 0) {
     // Victory
-    isEnemyHit.value = true;
+    console.log('[ArithmeticPage][SHAKE_DEBUG] victory branch, trigger hit');
+    isEnemyHit.value = false;
+    nextTick(() => {
+      isEnemyHit.value = true;
+    });
     setTimeout(() => {
       isSubmittingAnswer.value = false;
       showBattleResult.value = true;
@@ -313,9 +377,16 @@ function handleBattleAnswer(answer: number | null) {
     battleRecord.value = battleEngine.value?.getBattleRecord() || null;
     battleResult.value = 'defeat';
   } else {
-    // Continue
-    if (answer === battleEngine.value.state.currentQuestion?.answer) {
-      isEnemyHit.value = true;
+    // Continue - modify by jx: use isCorrect (saved before submit) to trigger hit shake; reset then set true in nextTick
+    if (isCorrect) {
+      console.log('[ArithmeticPage][SHAKE_DEBUG] correct answer, trigger energy orb shake');
+      isEnemyHit.value = false;
+      nextTick(() => {
+        isEnemyHit.value = true;
+        console.log('[ArithmeticPage][SHAKE_DEBUG] isEnemyHit set to true in nextTick');
+      });
+    } else {
+      console.log('[ArithmeticPage][SHAKE_DEBUG] wrong answer, no shake');
     }
     setTimeout(() => {
       isEnemyHit.value = false;
@@ -323,7 +394,7 @@ function handleBattleAnswer(answer: number | null) {
       nextTick(() => {
         battleQuestionRef.value?.focus();
       });
-    }, 300);
+    }, 400);
   }
 }
 
@@ -609,8 +680,28 @@ const handlePrint = (includeAnswers: boolean) => {
 }
 
 .header {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 32px;
+  padding: 0 16px;
+}
+
+.header-left {
+  text-align: left;
+}
+
+.header-right {
+  flex-shrink: 0;
+}
+
+.settings-button {
+  width: 44px;
+  height: 44px;
+}
+
+.settings-button .el-icon {
+  font-size: 20px;
 }
 
 .title {

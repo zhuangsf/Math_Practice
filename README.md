@@ -191,9 +191,20 @@ Math_Practice/
 │   │   ├── ComparisonTutoringPlan.vue  # 比较大小辅导计划
 │   │   ├── ComparisonWrongQuestionAnalysis.vue  # 比较大小错题分析
 │   │   ├── PatternTutoringPlan.vue  # 找规律辅导计划
-│   │   └── PatternWrongQuestionAnalysis.vue  # 找规律错题分析
+│   │   ├── PatternWrongQuestionAnalysis.vue  # 找规律错题分析
+│   │   ├── SettingsDialog.vue  # 设置对话框（游戏/答题配置）
+│   │   └── battle/             # 对战模式组件
+│   │       ├── BattleEnemy.vue     # 对战敌人显示
+│   │       ├── BattleEnemy.test.ts # BattleEnemy 单元测试
+│   │       ├── BattleQuestion.vue  # 对战题目
+│   │       ├── BattleHUD.vue       # 对战 HUD
+│   │       ├── BattleResult.vue    # 对战结果
+│   │       └── BattleTimer.vue     # 对战计时
 │   ├── composables/             # 组合式函数
 │   │   ├── useQuestionGenerator.ts  # 四则运算题目生成逻辑
+│   │   ├── useBattleEngine.ts   # 对战引擎逻辑
+│   │   ├── useBattleNavigation.ts  # 对战导航
+│   │   ├── useGameSettings.ts   # 游戏设置（持久化）
 │   │   ├── useEquationGenerator.ts  # 一元一次方程生成逻辑
 │   │   ├── useFractionGenerator.ts  # 分数运算生成逻辑
 │   │   ├── useDecimalGenerator.ts   # 小数运算生成逻辑
@@ -235,7 +246,8 @@ Math_Practice/
 │   │   ├── UnitConversionPage.vue  # 单位换算页面
 │   │   ├── PrimeCompositePage.vue  # 质数合数页面
 │   │   ├── ComparisonPage.vue   # 比较大小页面
-│   │   └── PatternPage.vue      # 找规律页面
+│   │   ├── PatternPage.vue      # 找规律页面
+│   │   └── BattlePage.vue        # 对战模式页面
 │   ├── App.vue                  # 根组件
 │   └── main.ts                  # 应用入口
 ├── electron/                    # Electron相关文件
@@ -244,7 +256,10 @@ Math_Practice/
 ├── index.html                   # HTML模板
 ├── package.json                 # 依赖配置
 ├── vite.config.ts               # Vite配置
-└── tsconfig.json                # TypeScript配置
+├── vitest.config.ts             # Vitest 单元测试配置
+├── tsconfig.json                # TypeScript配置
+├── TROUBLESHOOTING.md           # 故障排查文档
+└── log/                         # 运行日志目录（可选）
 ```
 
 ## 安装与运行

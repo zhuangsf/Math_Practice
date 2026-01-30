@@ -4,11 +4,11 @@
     <div class="control-section">
       <h3 class="section-title">单位类型</h3>
       <el-checkbox-group v-model="config.unitTypes" size="large">
-        <el-checkbox-button label="length">长度</el-checkbox-button>
-        <el-checkbox-button label="weight">重量</el-checkbox-button>
-        <el-checkbox-button label="area">面积</el-checkbox-button>
-        <el-checkbox-button label="volume">体积</el-checkbox-button>
-        <el-checkbox-button label="time">时间</el-checkbox-button>
+        <el-checkbox-button value="length">长度</el-checkbox-button>
+        <el-checkbox-button value="weight">重量</el-checkbox-button>
+        <el-checkbox-button value="area">面积</el-checkbox-button>
+        <el-checkbox-button value="volume">体积</el-checkbox-button>
+        <el-checkbox-button value="time">时间</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.unitTypes.length === 0" class="warning-text">
         请至少选择一种单位类型
@@ -19,9 +19,9 @@
     <div class="control-section">
       <h3 class="section-title">换算方向</h3>
       <el-radio-group v-model="config.conversionDirection" size="large">
-        <el-radio-button label="large-to-small">大单位转小单位</el-radio-button>
-        <el-radio-button label="small-to-large">小单位转大单位</el-radio-button>
-        <el-radio-button label="mixed">混合</el-radio-button>
+        <el-radio-button value="large-to-small">大单位转小单位</el-radio-button>
+        <el-radio-button value="small-to-large">小单位转大单位</el-radio-button>
+        <el-radio-button value="mixed">混合</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -56,9 +56,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -66,8 +66,8 @@
     <div class="control-section">
       <h3 class="section-title">答题模式</h3>
       <el-radio-group v-model="answerMode" size="large">
-        <el-radio-button label="practice">练习模式</el-radio-button>
-        <el-radio-button label="answering">答题模式</el-radio-button>
+        <el-radio-button value="practice">练习模式</el-radio-button>
+        <el-radio-button value="answering">答题模式</el-radio-button>
       </el-radio-group>
       <div class="mode-description">
         <span v-if="answerMode === 'practice'">练习模式：仅显示题目，适合打印和导出</span>

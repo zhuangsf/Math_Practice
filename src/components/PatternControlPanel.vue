@@ -4,11 +4,11 @@
     <div class="control-section">
       <h3 class="section-title">规律类型</h3>
       <el-checkbox-group v-model="config.patternTypes" size="large">
-        <el-checkbox-button label="arithmetic">等差数列</el-checkbox-button>
-        <el-checkbox-button label="geometric">等比数列</el-checkbox-button>
-        <el-checkbox-button label="fibonacci">斐波那契</el-checkbox-button>
-        <el-checkbox-button label="square">平方数列</el-checkbox-button>
-        <el-checkbox-button label="cube">立方数列</el-checkbox-button>
+        <el-checkbox-button value="arithmetic">等差数列</el-checkbox-button>
+        <el-checkbox-button value="geometric">等比数列</el-checkbox-button>
+        <el-checkbox-button value="fibonacci">斐波那契</el-checkbox-button>
+        <el-checkbox-button value="square">平方数列</el-checkbox-button>
+        <el-checkbox-button value="cube">立方数列</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.patternTypes.length === 0" class="warning-text">
         请至少选择一种规律类型
@@ -31,9 +31,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -41,8 +41,8 @@
     <div class="control-section">
       <h3 class="section-title">答题模式</h3>
       <el-radio-group v-model="answerMode" size="large">
-        <el-radio-button label="practice">练习模式</el-radio-button>
-        <el-radio-button label="answering">答题模式</el-radio-button>
+        <el-radio-button value="practice">练习模式</el-radio-button>
+        <el-radio-button value="answering">答题模式</el-radio-button>
       </el-radio-group>
       <div class="mode-description">
         <span v-if="answerMode === 'practice'">练习模式：仅显示题目，适合打印和导出</span>

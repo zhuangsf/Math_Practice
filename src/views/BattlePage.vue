@@ -20,11 +20,12 @@
       </template>
     </el-dialog>
 
-    <!-- Battle Result Dialog -->
+    <!-- Battle Result Dialog: only render when record and result exist to avoid null prop warning -->
     <BattleResult
+      v-if="battleRecord && battleResult"
       v-model="showBattleResult"
-      :record="battleRecord!"
-      :result="battleResult!"
+      :record="battleRecord"
+      :result="battleResult"
       @rematch="handleRematch"
       @return="handleReturnFromBattle"
     />
@@ -107,12 +108,14 @@
         <div class="battle-arena">
           <!-- Enemy (Energy Ball) -->
           <BattleEnemy
+            :key="hitAnimationKey"
             :hp="battleState.enemyHP"
             :max-hp="battleConfig.enemyHP"
             :attack="battleState.enemyAttack"
             :is-hit="isEnemyHit"
             :is-attacking="isEnemyAttacking"
-            @hit-animation-end="isEnemyHit = false"
+            :shake-enabled="shakeEnabled"
+            @hit-animation-end="handleHitAnimationEnd"
             @attack-animation-end="isEnemyAttacking = false"
           />
 
@@ -166,6 +169,7 @@ import BattleResult from '@/components/battle/BattleResult.vue';
 import { useBattleEngine } from '@/composables/useBattleEngine';
 import { useBattleNavigation } from '@/composables/useBattleNavigation';
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
+import { useGameSettings } from '@/composables/useGameSettings';
 import type { BattleRecord, BattleResult as BattleResultType } from '@/types';
 
 // Get battle navigation state
@@ -190,6 +194,12 @@ const isEnemyAttacking = ref(false);
 const isSubmittingAnswer = ref(false);
 const showRetreatDialog = ref(false);
 const battleQuestionRef = ref<InstanceType<typeof BattleQuestion> | null>(null);
+const hitAnimationKey = ref(0);  // modify by jx: use unique key for each hit animation
+
+// Get game settings - keep ref structure for proper reactivity
+// modify by jx: fix destructuring issue that causes undefined error
+const gameSettingsRef = useGameSettings();
+const shakeEnabled = computed(() => gameSettingsRef.value?.shakeEnabled ?? false);  // modify by jx: default off to disable energy orb shake after starting battle
 
 // Get battle state from engine
 const battleState = computed(() => {
@@ -255,16 +265,22 @@ function handleStartBattle() {
 }
 
 // Handle battle answer submission
+// modify by jx: save expected answer BEFORE submitAnswer (it advances currentQuestion); do NOT increment hitAnimationKey on correct (would destroy BattleEnemy and skip shake)
 function handleBattleAnswer(answer: number | null) {
   if (!battleEngine.value || isSubmittingAnswer.value) return;
-  
+
+  const expectedAnswer = battleEngine.value.state.currentQuestion?.answer ?? null;
+  const isCorrect = answer !== null && answer === expectedAnswer;
+
   isSubmittingAnswer.value = true;
-  
   const result = battleEngine.value.submitAnswer(answer);
-  
+
   if (result && battleEngine.value.state.enemyHP <= 0) {
-    // Victory
-    isEnemyHit.value = true;
+    // Victory - trigger hit then show result
+    isEnemyHit.value = false;
+    nextTick(() => {
+      isEnemyHit.value = true;
+    });
     setTimeout(() => {
       isSubmittingAnswer.value = false;
       showBattleResult.value = true;
@@ -272,15 +288,17 @@ function handleBattleAnswer(answer: number | null) {
       battleResult.value = 'victory';
     }, 500);
   } else if (battleEngine.value.state.playerHP <= 0) {
-    // Defeat
     isSubmittingAnswer.value = false;
     showBattleResult.value = true;
     battleRecord.value = battleEngine.value?.getBattleRecord() || null;
     battleResult.value = 'defeat';
   } else {
-    // Continue
-    if (answer === battleEngine.value.state.currentQuestion?.answer) {
-      isEnemyHit.value = true;
+    // Continue - trigger energy orb shake on correct (same instance, no key change)
+    if (isCorrect) {
+      isEnemyHit.value = false;
+      nextTick(() => {
+        isEnemyHit.value = true;
+      });
     }
     setTimeout(() => {
       isEnemyHit.value = false;
@@ -288,8 +306,14 @@ function handleBattleAnswer(answer: number | null) {
       nextTick(() => {
         battleQuestionRef.value?.focus();
       });
-    }, 300);
+    }, 400);
   }
+}
+
+// modify by jx: handle hit animation end - reset state for next animation
+function handleHitAnimationEnd() {
+  console.log('[BattlePage][SHAKE_DEBUG] handleHitAnimationEnd', { isEnemyHitBefore: isEnemyHit.value, hitAnimationKey: hitAnimationKey.value, ts: Date.now() });
+  isEnemyHit.value = false;
 }
 
 // Handle retreat request

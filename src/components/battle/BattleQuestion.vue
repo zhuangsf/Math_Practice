@@ -85,10 +85,15 @@ watch(() => props.question, () => {
   });
 });
 
-// Handle submit
+// Handle submit - modify by jx: log when user submits so parent handleBattleAnswer can be traced
 function handleSubmit() {
-  if (props.isSubmitting) return;
+  console.log('[BattleQuestion][SHAKE_DEBUG] handleSubmit called', { answerValue: answerValue.value, isSubmitting: props.isSubmitting, ts: Date.now() });
+  if (props.isSubmitting) {
+    console.log('[BattleQuestion][SHAKE_DEBUG] SKIP: isSubmitting true');
+    return;
+  }
   emit('submit', answerValue.value);
+  console.log('[BattleQuestion][SHAKE_DEBUG] emitted submit', { answer: answerValue.value, ts: Date.now() });
 }
 
 // Handle retreat

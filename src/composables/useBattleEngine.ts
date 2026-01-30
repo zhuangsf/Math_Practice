@@ -319,10 +319,10 @@ export function useBattleEngine(
     resetBattle();
   }
 
-  // Cleanup on unmount
-  onUnmounted(() => {
-    clearAllTimers();
-  });
+  // Cleanup on unmount - moved to BattlePage.vue onUnmounted hook
+  // modify by jx: remove onUnmounted from here to avoid "no active component instance" warning
+  // The composable may be called after setup phase, so lifecycle hooks must be registered during setup
+  // Timer cleanup is now handled by BattlePage.vue's onUnmounted
 
   return {
     // State

@@ -4,10 +4,10 @@
     <div class="control-section">
       <h3 class="section-title">运算元数量</h3>
       <el-radio-group v-model="config.operandCount" size="large">
-        <el-radio-button :label="2">二元运算</el-radio-button>
-        <el-radio-button :label="3">三元运算</el-radio-button>
-        <el-radio-button :label="4">四元运算</el-radio-button>
-        <el-radio-button label="mixed">混合模式</el-radio-button>
+        <el-radio-button :value="2">二元运算</el-radio-button>
+        <el-radio-button :value="3">三元运算</el-radio-button>
+        <el-radio-button :value="4">四元运算</el-radio-button>
+        <el-radio-button value="mixed">混合模式</el-radio-button>
       </el-radio-group>
       <div v-if="config.operandCount === 'mixed'" class="mode-description">
         混合模式：随机生成二元、三元、四元运算题目
@@ -45,10 +45,10 @@
     <div class="control-section">
       <h3 class="section-title">运算类型</h3>
       <el-checkbox-group v-model="config.operations" size="large">
-        <el-checkbox-button label="add">加法</el-checkbox-button>
-        <el-checkbox-button label="subtract">减法</el-checkbox-button>
-        <el-checkbox-button label="multiply">乘法</el-checkbox-button>
-        <el-checkbox-button label="divide">除法</el-checkbox-button>
+        <el-checkbox-button value="add">加法</el-checkbox-button>
+        <el-checkbox-button value="subtract">减法</el-checkbox-button>
+        <el-checkbox-button value="multiply">乘法</el-checkbox-button>
+        <el-checkbox-button value="divide">除法</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.operations.length === 0" class="warning-text">
         请至少选择一种运算类型
@@ -59,9 +59,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -73,9 +73,9 @@
         size="large"
         @change="handleAnswerModeChange"
       >
-        <el-radio-button label="practice">练习模式</el-radio-button>
-        <el-radio-button label="answering">答题模式</el-radio-button>
-        <el-radio-button label="battle">
+        <el-radio-button value="practice">练习模式</el-radio-button>
+        <el-radio-button value="answering">答题模式</el-radio-button>
+        <el-radio-button value="battle">
           <span>⚔️ 游戏模式</span>
         </el-radio-button>
       </el-radio-group>

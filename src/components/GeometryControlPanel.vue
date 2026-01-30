@@ -4,12 +4,12 @@
     <div class="control-section">
       <h3 class="section-title">图形类型</h3>
       <el-checkbox-group v-model="config.shapes" size="large">
-        <el-checkbox-button label="rectangle">长方形</el-checkbox-button>
-        <el-checkbox-button label="square">正方形</el-checkbox-button>
-        <el-checkbox-button label="triangle">三角形</el-checkbox-button>
-        <el-checkbox-button label="circle">圆形</el-checkbox-button>
-        <el-checkbox-button label="cuboid">长方体</el-checkbox-button>
-        <el-checkbox-button label="cube">正方体</el-checkbox-button>
+        <el-checkbox-button value="rectangle">长方形</el-checkbox-button>
+        <el-checkbox-button value="square">正方形</el-checkbox-button>
+        <el-checkbox-button value="triangle">三角形</el-checkbox-button>
+        <el-checkbox-button value="circle">圆形</el-checkbox-button>
+        <el-checkbox-button value="cuboid">长方体</el-checkbox-button>
+        <el-checkbox-button value="cube">正方体</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.shapes.length === 0" class="warning-text">
         请至少选择一种图形类型
@@ -20,9 +20,9 @@
     <div class="control-section">
       <h3 class="section-title">计算类型</h3>
       <el-checkbox-group v-model="config.calculationTypes" size="large">
-        <el-checkbox-button label="perimeter">周长</el-checkbox-button>
-        <el-checkbox-button label="area">面积</el-checkbox-button>
-        <el-checkbox-button label="volume">体积</el-checkbox-button>
+        <el-checkbox-button value="perimeter">周长</el-checkbox-button>
+        <el-checkbox-button value="area">面积</el-checkbox-button>
+        <el-checkbox-button value="volume">体积</el-checkbox-button>
       </el-checkbox-group>
       <div v-if="config.calculationTypes.length === 0" class="warning-text">
         请至少选择一种计算类型
@@ -60,8 +60,8 @@
     <div class="control-section">
       <h3 class="section-title">π值</h3>
       <el-radio-group v-model="config.piValue" size="large">
-        <el-radio-button :label="3.14">3.14</el-radio-button>
-        <el-radio-button :label="3.14159">3.14159</el-radio-button>
+        <el-radio-button :value="3.14">3.14</el-radio-button>
+        <el-radio-button :value="3.14159">3.14159</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -69,9 +69,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -79,8 +79,8 @@
     <div class="control-section">
       <h3 class="section-title">答题模式</h3>
       <el-radio-group v-model="answerMode" size="large">
-        <el-radio-button label="practice">练习模式</el-radio-button>
-        <el-radio-button label="answering">答题模式</el-radio-button>
+        <el-radio-button value="practice">练习模式</el-radio-button>
+        <el-radio-button value="answering">答题模式</el-radio-button>
       </el-radio-group>
       <div class="mode-description">
         <span v-if="answerMode === 'practice'">练习模式：仅显示题目，适合打印和导出</span>

@@ -4,9 +4,9 @@
     <div class="control-section">
       <h3 class="section-title">难度等级</h3>
       <el-radio-group v-model="config.difficulty" size="large">
-        <el-radio-button label="easy">简单</el-radio-button>
-        <el-radio-button label="medium">中等</el-radio-button>
-        <el-radio-button label="hard">复杂</el-radio-button>
+        <el-radio-button value="easy">简单</el-radio-button>
+        <el-radio-button value="medium">中等</el-radio-button>
+        <el-radio-button value="hard">复杂</el-radio-button>
       </el-radio-group>
     </div>
 
@@ -14,9 +14,9 @@
     <div class="control-section">
       <h3 class="section-title">题目数量</h3>
       <el-radio-group v-model="config.questionCount" size="large">
-        <el-radio-button :label="20">20题</el-radio-button>
-        <el-radio-button :label="50">50题</el-radio-button>
-        <el-radio-button :label="100">100题</el-radio-button>
+        <el-radio-button :value="20">20题</el-radio-button>
+        <el-radio-button :value="50">50题</el-radio-button>
+        <el-radio-button :value="100">100题</el-radio-button>
       </el-radio-group>
     </div>
 
