@@ -1,5 +1,6 @@
 <template>
-  <div class="arithmetic-page">
+  <div class="arithmetic-page" :class="{ 'battle-mode': answerMode === 'battle' }">
+    
     <!-- Header -->
     <div class="header">
       <h2 class="title">四则运算题目生成</h2>
@@ -12,26 +13,69 @@
         v-model="config"
         v-model:show-answers="showAnswers"
         v-model:answer-mode="answerMode"
+        v-model:battle-settings="battleSettings"
+        question-type="arithmetic"
+        question-type-name="四则运算"
+        @update:battle-settings="handleBattleSettingsUpdate"
+        @enter-battle="handleEnterBattle"
       />
     </div>
 
-    <!-- Action Buttons -->
-    <div class="action-buttons-section">
-      <ActionButtons
-        :is-generating="isGenerating"
-        :is-exporting="isExporting"
-        :questions="questions"
-        :show-answers="showAnswers"
-        @generate="handleGenerate"
-        @export-txt="handleExportTxt"
-        @export-pdf="handleExportPdf"
-        @export-excel="handleExportExcel"
-        @print="handlePrint"
-      />
+    <!-- Battle Mode Actions -->
+    <div v-if="answerMode === 'battle' && battleState.phase === 'idle'" class="battle-start-section">
+      <el-button type="primary" size="large" @click="handleStartBattle">
+        ⚔️ 开始战斗
+      </el-button>
+      <p class="battle-hint">快速解答题目，驯服能量团！</p>
     </div>
 
-    <!-- Answer Mode Actions -->
-    <div v-if="answerMode === 'answering' && questions.length > 0" class="answer-actions-section">
+    <!-- Battle Mode (when active) -->
+    <div v-if="answerMode === 'battle' && battleState.phase !== 'idle'" class="battle-container">
+      <!-- Battle HUD -->
+      <BattleHUD
+        :state="battleState"
+        :player-max-hp="battleConfig.playerHP"
+        :enemy-max-hp="battleConfig.enemyHP"
+        :total-questions="battleConfig.questionCount"
+      />
+
+      <!-- Battle Enemy -->
+      <BattleEnemy
+        :hp="battleState.enemyHP"
+        :max-hp="battleConfig.enemyHP"
+        :attack="battleState.enemyAttack"
+        :is-hit="isEnemyHit"
+        :is-attacking="isEnemyAttacking"
+        @hit-animation-end="isEnemyHit = false"
+        @attack-animation-end="isEnemyAttacking = false"
+      />
+
+      <!-- Battle Timer -->
+      <BattleTimer
+        :time-remaining="battleState.timeRemaining"
+        :max-time="battleConfig.questionTime"
+      />
+
+      <!-- Battle Question -->
+      <BattleQuestion
+        v-if="battleState.currentQuestion"
+        :question="battleState.currentQuestion"
+        :question-number="battleState.questionCount + 1"
+        :is-submitting="isSubmittingAnswer"
+        @submit="handleBattleAnswer"
+        @retreat="handleRetreat"
+        ref="battleQuestionRef"
+      />
+
+      <!-- Battle Info -->
+      <div class="battle-info">
+        <span>总伤害: {{ battleState.totalDamage.toFixed(1) }}</span>
+        <span>正确: {{ battleState.correctCount }}</span>
+      </div>
+    </div>
+
+    <!-- Answer Mode Actions (non-battle) -->
+    <div v-if="answerMode === 'answering' && questions.length > 0 && battleState.phase === 'idle'" class="answer-actions-section">
       <el-button
         type="primary"
         size="large"
@@ -49,13 +93,28 @@
       </el-button>
     </div>
 
+    <!-- Action Buttons (non-battle) -->
+    <div v-if="answerMode !== 'battle' || battleState.phase === 'idle'" class="action-buttons-section">
+      <ActionButtons
+        :is-generating="isGenerating"
+        :is-exporting="isExporting"
+        :questions="questions"
+        :show-answers="showAnswers"
+        @generate="handleGenerate"
+        @export-txt="handleExportTxt"
+        @export-pdf="handleExportPdf"
+        @export-excel="handleExportExcel"
+        @print="handlePrint"
+      />
+    </div>
+
     <!-- Score Display -->
-    <div v-if="score && isSubmitted" class="score-section">
+    <div v-if="score && isSubmitted && answerMode !== 'battle'" class="score-section">
       <ScoreDisplay :score="score" />
     </div>
 
     <!-- Wrong Question Analysis -->
-    <div v-if="wrongQuestionStats && isSubmitted" class="analysis-section">
+    <div v-if="wrongQuestionStats && isSubmitted && answerMode !== 'battle'" class="analysis-section">
       <WrongQuestionAnalysis
         :stats="wrongQuestionStats"
         :wrong-questions="wrongQuestions"
@@ -64,31 +123,40 @@
     </div>
 
     <!-- Tutoring Plan -->
-    <div v-if="tutoringPlan && isSubmitted" class="tutoring-plan-section">
+    <div v-if="tutoringPlan && isSubmitted && answerMode !== 'battle'" class="tutoring-plan-section">
       <TutoringPlanComponent
         :plan="tutoringPlan"
         @apply-recommended-config="handleApplyRecommendedConfig"
       />
     </div>
 
-    <!-- Question Display -->
-    <div class="question-display-section">
+    <!-- Question Display (non-battle) -->
+    <div v-if="answerMode !== 'battle' || battleState.phase === 'idle'" class="question-display-section">
       <QuestionDisplay
         :questions="questions"
         :show-answers="showAnswers"
-        :answer-mode="answerMode"
+        :answer-mode="answerMode === 'battle' ? 'practice' : answerMode"
         :student-answers="studentAnswersMap"
         :is-submitted="isSubmitted"
         @answer-change="handleAnswerChange"
       />
     </div>
+
+    <!-- Battle Result Dialog -->
+    <BattleResult
+      v-model="showBattleResult"
+      :record="battleRecord!"
+      :result="battleResult!"
+      @rematch="handleRematch"
+      @return="handleReturnFromBattle"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement arithmetic page with control panel, action buttons, question display, answering, scoring and analysis
+// modify by jx: implement arithmetic page with battle mode support
 
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import ControlPanel from '@/components/ControlPanel.vue';
 import QuestionDisplay from '@/components/QuestionDisplay.vue';
@@ -96,13 +164,24 @@ import ActionButtons from '@/components/ActionButtons.vue';
 import ScoreDisplay from '@/components/ScoreDisplay.vue';
 import WrongQuestionAnalysis from '@/components/WrongQuestionAnalysis.vue';
 import TutoringPlanComponent from '@/components/TutoringPlan.vue';
+import BattleHUD from '@/components/battle/BattleHUD.vue';
+import BattleEnemy from '@/components/battle/BattleEnemy.vue';
+import BattleTimer from '@/components/battle/BattleTimer.vue';
+import BattleQuestion from '@/components/battle/BattleQuestion.vue';
+import BattleResult from '@/components/battle/BattleResult.vue';
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
 import { useExport } from '@/composables/useExport';
 import { useAnswering } from '@/composables/useAnswering';
 import { calculateScore } from '@/composables/useScoring';
 import { extractWrongQuestions, calculateWrongQuestionStats } from '@/composables/useWrongQuestionAnalysis';
 import { generateTutoringPlan } from '@/composables/useTutoringPlan';
-import type { QuestionConfig, ScoreResult, WrongQuestionStats, WrongQuestion, TutoringPlan } from '@/types';
+import { useBattleEngine } from '@/composables/useBattleEngine';
+import type { QuestionConfig, ScoreResult, WrongQuestionStats, WrongQuestion, TutoringPlan, BattleConfig, BattleSettings, BattleRecord, BattleResult as BattleResultType } from '@/types';
+
+// Debug logging
+function logDebug(...args: any[]) {
+  console.log('[ArithmeticPage]', ...args);
+}
 
 // Default configuration
 const defaultConfig: QuestionConfig = {
@@ -113,17 +192,177 @@ const defaultConfig: QuestionConfig = {
   questionCount: 20
 };
 
+// Default battle configuration
+const defaultBattleConfig: BattleConfig = {
+  playerHP: 100,
+  enemyHP: 50,
+  enemyBaseAttack: 10,
+  prepareTime: 3,
+  questionTime: 10.0,
+  enemyAttackInterval: 10,
+  questionCount: 20
+  // modify by jx: removed difficulty field
+};
+
 // Reactive state
 const config = ref<QuestionConfig>({ ...defaultConfig });
 const showAnswers = ref(false);
-const answerMode = ref<'practice' | 'answering'>('practice');
+const answerMode = ref<'practice' | 'answering' | 'battle'>('practice');
+
+// Battle settings
+const battleSettings = ref<BattleSettings>({
+  enemyHP: 50,
+  questionTime: 10.0
+});
+
+// Battle configuration based on settings
+const battleConfig = computed<BattleConfig>(() => {
+  return {
+    ...defaultBattleConfig,
+    enemyHP: battleSettings.value.enemyHP,
+    questionTime: battleSettings.value.questionTime
+    // modify by jx: removed difficulty, questions use main config
+  };
+});
 
 // Use question generator composable
 const { isGenerating, questions, generateQuestions, clearQuestions } = useQuestionGenerator();
 
 // Use export composable
-// modify by jx: add exportToExcel to the export composable destructuring
 const { isExporting, exportToTxt, exportToPdf, exportToExcel, printQuestions } = useExport();
+
+// Battle state and engine
+const battleEngine = ref<ReturnType<typeof useBattleEngine> | null>(null);
+const battleRecord = ref<BattleRecord | null>(null);
+const battleResult = ref<BattleResultType>(null);
+const showBattleResult = ref(false);
+const isEnemyHit = ref(false);
+const isEnemyAttacking = ref(false);
+const isSubmittingAnswer = ref(false);
+const battleQuestionRef = ref<InstanceType<typeof BattleQuestion> | null>(null);
+
+// Get battle state from engine (computed for reactivity)
+const battleState = computed(() => {
+  if (battleEngine.value?.state) {
+    return battleEngine.value.state;
+  }
+  // Return default idle state when engine is not initialized
+  return {
+    phase: 'idle' as const,
+    playerHP: 100,
+    enemyHP: 50,
+    enemyAttack: 10,
+    currentQuestion: null,
+    timeRemaining: 0,
+    battleResult: null,
+    questionCount: 0,
+    correctCount: 0,
+    combo: 0,
+    maxCombo: 0,
+    totalDamage: 0,
+    isRetreated: false
+  };
+});
+
+// Initialize battle engine
+function initBattleEngine() {
+  const engine = useBattleEngine(
+    battleConfig.value,
+    'arithmetic',
+    '四则运算',
+    () => {
+      const generated = generateQuestions({
+        ...config.value,
+        questionCount: 1
+      });
+      return generated.length > 0 ? generated : [];
+    }
+  );
+  
+  battleEngine.value = engine;
+}
+
+// Battle handlers
+function handleStartBattle() {
+  initBattleEngine();
+  battleEngine.value?.initializeBattle();
+  battleEngine.value?.startPrepareTimer();
+  ElMessage.info('准备进入战斗！');
+}
+
+function handleBattleAnswer(answer: number | null) {
+  if (!battleEngine.value || isSubmittingAnswer.value) return;
+  
+  isSubmittingAnswer.value = true;
+  
+  const result = battleEngine.value.submitAnswer(answer);
+  
+  if (result && battleEngine.value.state.enemyHP <= 0) {
+    // Victory
+    isEnemyHit.value = true;
+    setTimeout(() => {
+      isSubmittingAnswer.value = false;
+      showBattleResult.value = true;
+      battleRecord.value = battleEngine.value?.getBattleRecord() || null;
+      battleResult.value = 'victory';
+    }, 500);
+  } else if (battleEngine.value.state.playerHP <= 0) {
+    // Defeat
+    isSubmittingAnswer.value = false;
+    showBattleResult.value = true;
+    battleRecord.value = battleEngine.value?.getBattleRecord() || null;
+    battleResult.value = 'defeat';
+  } else {
+    // Continue
+    if (answer === battleEngine.value.state.currentQuestion?.answer) {
+      isEnemyHit.value = true;
+    }
+    setTimeout(() => {
+      isEnemyHit.value = false;
+      isSubmittingAnswer.value = false;
+      nextTick(() => {
+        battleQuestionRef.value?.focus();
+      });
+    }, 300);
+  }
+}
+
+function handleRetreat() {
+  if (!battleEngine.value) return;
+  
+  ElMessage.warning('撤退成功！');
+  battleRecord.value = battleEngine.value.retreat();
+  battleResult.value = 'retreat';
+  showBattleResult.value = true;
+}
+
+function handleRematch() {
+  if (!battleEngine.value) return;
+  battleEngine.value.resetBattle();
+  battleEngine.value.startPrepareTimer();
+  showBattleResult.value = false;
+}
+
+function handleReturnFromBattle() {
+  if (!battleEngine.value) return;
+  battleEngine.value.resetBattle();
+  showBattleResult.value = false;
+  // modify by jx: keep battle mode to allow rematch after retreat
+  // answerMode.value = 'practice';
+}
+
+// Handle battle settings update
+function handleBattleSettingsUpdate(settings: BattleSettings) {
+  battleSettings.value = settings;
+}
+
+// Handle entering battle mode
+function handleEnterBattle() {
+  logDebug('Entering battle mode with config:', {
+    config: config.value,
+    battleSettings: battleSettings.value
+  });
+}
 
 // Use answering composable
 const {
@@ -140,11 +379,16 @@ const {
 
 // Watch answerMode changes
 watch(answerMode, (newMode) => {
+  logDebug('answerMode changed to:', newMode);
   if (newMode === 'answering' && questions.value.length > 0) {
-    // modify by jx: clear all answers before initializing when entering answering mode
     clearAnswers();
     initializeAnswers();
-  } else if (newMode === 'practice') {
+  } else if (newMode === 'battle') {
+    // Initialize battle state when entering battle mode
+    logDebug('Entering battle mode, clearing questions and answers');
+    clearQuestions();
+    clearAnswers();
+  } else {
     clearAnswers();
   }
 });
@@ -262,7 +506,6 @@ const handleSubmitAnswers = () => {
 
 // Handle reset answers
 const handleResetAnswers = () => {
-  // modify by jx: clear all answers before resetting
   clearAnswers();
   resetAnswers();
   score.value = null;
@@ -274,7 +517,6 @@ const handleResetAnswers = () => {
 
 // Handle view wrong questions
 const handleViewWrongQuestions = () => {
-  // TODO: Implement wrong questions view dialog or page
   ElMessage.info(`共有 ${wrongQuestions.value.length} 道错题`);
 };
 
@@ -323,7 +565,6 @@ const handleExportPdf = (includeAnswers: boolean) => {
 };
 
 // Handle export Excel
-// modify by jx: add Excel export handler for arithmetic questions
 const handleExportExcel = (includeAnswers: boolean) => {
   if (questions.value.length === 0) {
     ElMessage.warning('请先生成题目');
@@ -359,6 +600,12 @@ const handlePrint = (includeAnswers: boolean) => {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.arithmetic-page.battle-mode {
+  max-width: 800px;
+  padding: 16px;
 }
 
 .header {
@@ -410,9 +657,62 @@ const handlePrint = (includeAnswers: boolean) => {
   margin-bottom: 24px;
 }
 
+/* Battle mode styles */
+.battle-start-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.battle-start-section .el-button {
+  height: 64px;
+  padding: 0 48px;
+  font-size: 24px;
+  font-weight: 700;
+  border-radius: 16px;
+}
+
+.battle-hint {
+  color: #909399;
+  font-size: 16px;
+}
+
+.battle-container {
+  padding: 24px;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.battle-info {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  margin-top: 24px;
+  font-size: 16px;
+  color: #909399;
+}
+
+.battle-info span:first-child {
+  color: #67c23a;
+}
+
+.battle-info span:last-child {
+  color: #409eff;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .arithmetic-page {
+    padding: 12px;
+  }
+
+  .arithmetic-page.battle-mode {
     padding: 12px;
   }
 
@@ -422,6 +722,17 @@ const handlePrint = (includeAnswers: boolean) => {
 
   .subtitle {
     font-size: 14px;
+  }
+
+  .debug-bar {
+    font-family: monospace;
+    white-space: pre;
+  }
+
+  .battle-info {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
   }
 }
 </style>

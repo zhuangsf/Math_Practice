@@ -68,13 +68,62 @@
     <!-- Answer Mode Selection -->
     <div class="control-section">
       <h3 class="section-title">答题模式</h3>
-      <el-radio-group v-model="answerMode" size="large">
+      <el-radio-group 
+        v-model="answerMode" 
+        size="large"
+        @change="handleAnswerModeChange"
+      >
         <el-radio-button label="practice">练习模式</el-radio-button>
         <el-radio-button label="answering">答题模式</el-radio-button>
+        <el-radio-button label="battle">
+          <span>⚔️ 游戏模式</span>
+        </el-radio-button>
       </el-radio-group>
       <div class="mode-description">
         <span v-if="answerMode === 'practice'">练习模式：仅显示题目，适合打印和导出</span>
-        <span v-else>答题模式：可在题目下方输入答案，支持在线答题</span>
+        <span v-else-if="answerMode === 'answering'">答题模式：可在题目下方输入答案，支持在线答题</span>
+        <span v-else>游戏模式：在战斗中快速驯服能量团，答得越快伤害越高！</span>
+      </div>
+    </div>
+
+    <!-- Battle Settings (only visible in battle mode) -->
+    <div v-if="answerMode === 'battle'" class="control-section battle-settings">
+      <h3 class="section-title">⚔️ 战斗设置</h3>
+      <div class="battle-settings-grid">
+        <div class="setting-item">
+          <span class="setting-label">能量团HP</span>
+          <el-input-number 
+            v-model="battleSettings.enemyHP" 
+            :min="20" 
+            :max="100" 
+            :step="10"
+            size="large" 
+          />
+        </div>
+        <div class="setting-item">
+          <span class="setting-label">答题时间</span>
+          <el-input-number 
+            v-model="battleSettings.questionTime" 
+            :min="5" 
+            :max="20" 
+            :step="1"
+            size="large" 
+          />
+          <span class="setting-unit">秒</span>
+        </div>
+      </div>
+      <div class="battle-preview">
+        <div class="preview-item">
+          <span>初始伤害：</span>
+          <span class="preview-value">{{ calculateMinDamage() }}-{{ calculateMaxDamage() }}</span>
+        </div>
+        <div class="preview-item">
+          <span>预计击败需要：</span>
+          <span class="preview-value">{{ calculateExpectedQuestions() }}题</span>
+        </div>
+      </div>
+      <div class="battle-config-info">
+        <span>题目配置：{{ config.operandCount }}个运算元，{{ config.operations.join('、') }}，{{ config.questionCount }}题</span>
       </div>
     </div>
 
@@ -91,22 +140,80 @@
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement control panel component for user configuration
+// modify by jx: implement control panel component for user configuration with battle mode navigation
 
-import { reactive, watch } from 'vue';
-import type { QuestionConfig } from '@/types';
+import { reactive, ref, watch, computed } from 'vue';
+import type { QuestionConfig, BattleSettings } from '@/types';
+import { useBattleNavigation } from '@/composables/useBattleNavigation';
+
+// Debug logging
+function logDebug(...args: any[]) {
+  console.log('[ControlPanel]', ...args);
+}
 
 // Define props and emits
 const props = defineProps<{
   modelValue: QuestionConfig;
+  showAnswers?: boolean;
+  answerMode?: 'practice' | 'answering' | 'battle';
+  battleSettings: BattleSettings;
+  questionType?: string;      // Question type identifier (e.g., 'arithmetic', 'equation')
+  questionTypeName?: string;  // Question type display name (e.g., '四则运算', '一元一次方程')
 }>();
 
 const emit = defineEmits<{
   (e: 'update:modelValue', value: QuestionConfig): void;
+  (e: 'update:showAnswers', value: boolean): void;
+  (e: 'update:answerMode', value: 'practice' | 'answering' | 'battle'): void;
+  (e: 'update:battleSettings', value: BattleSettings): void;
+  (e: 'enterBattle'): void;  // Emit when entering battle mode
 }>();
 
-// Reactive config
+// Get battle navigation functions
+const { enterBattleMode } = useBattleNavigation();
+
+// Log initial props
+logDebug('Initial props:', {
+  showAnswers: props.showAnswers,
+  answerMode: props.answerMode,
+  battleSettings: props.battleSettings,
+  questionType: props.questionType,
+  questionTypeName: props.questionTypeName
+});
+
 const config = reactive<QuestionConfig>({ ...props.modelValue });
+
+// Show answers state
+const showAnswers = ref(props.showAnswers ?? false);
+
+// Answer mode state
+const answerMode = ref<'practice' | 'answering' | 'battle'>(props.answerMode ?? 'practice');
+
+// Battle settings
+const battleSettings = reactive<BattleSettings>({ ...props.battleSettings });
+
+// Get question type info (from props or use defaults)
+const currentQuestionType = computed(() => props.questionType || 'arithmetic');
+const currentQuestionTypeName = computed(() => props.questionTypeName || '四则运算');
+
+// Handle answer mode change
+function handleAnswerModeChange(value: string) {
+  const newMode = value as 'practice' | 'answering' | 'battle';
+  logDebug('Answer mode changed to:', newMode);
+  answerMode.value = newMode;
+  emit('update:answerMode', newMode);
+  
+  // Enter battle mode when battle is selected
+  if (newMode === 'battle') {
+    enterBattleMode(
+      currentQuestionType.value as any,
+      currentQuestionTypeName.value,
+      { ...config },
+      { ...battleSettings }
+    );
+    emit('enterBattle');
+  }
+}
 
 // Watch for changes and emit
 watch(
@@ -121,16 +228,51 @@ watch(
 watch(
   () => props.modelValue,
   (newValue) => {
+    logDebug('External modelValue changed:', newValue);
     Object.assign(config, newValue);
   },
   { deep: true }
 );
 
-// Show answers state
-const showAnswers = defineModel<boolean>('showAnswers');
+// Watch for showAnswers changes and emit
+watch(showAnswers, (newValue) => {
+  logDebug('showAnswers changed:', newValue);
+  emit('update:showAnswers', newValue);
+});
 
-// Answer mode state
-const answerMode = defineModel<'practice' | 'answering'>('answerMode', { default: 'practice' });
+// Watch for answerMode changes and emit
+watch(answerMode, (newValue) => {
+  logDebug('answerMode watched change:', newValue);
+  emit('update:answerMode', newValue);
+});
+
+// Watch for battle settings changes and emit
+watch(
+  battleSettings,
+  (newValue) => {
+    logDebug('battleSettings changed:', newValue);
+    emit('update:battleSettings', { ...newValue });
+  },
+  { deep: true }
+);
+
+// Calculate minimum possible damage
+function calculateMinDamage(): number {
+  // Minimum damage is 1 (when time is almost up)
+  return 1;
+}
+
+// Calculate maximum possible damage
+function calculateMaxDamage(): number {
+  // Maximum damage is the question time (when answered immediately)
+  return Math.floor(battleSettings.questionTime);
+}
+
+// Calculate expected number of questions to defeat enemy
+function calculateExpectedQuestions(): number {
+  const avgDamage = (calculateMinDamage() + calculateMaxDamage()) / 2;
+  return Math.ceil(battleSettings.enemyHP / avgDamage);
+}
 </script>
 
 <style scoped>
@@ -182,5 +324,86 @@ const answerMode = defineModel<'practice' | 'answering'>('answerMode', { default
   margin-top: 8px;
   font-size: 13px;
   color: #909399;
+}
+
+/* Battle settings styles */
+.battle-settings {
+  padding: 20px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px;
+  border: 2px solid #409eff;
+}
+
+.battle-settings .section-title {
+  color: #409eff;
+}
+
+.battle-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setting-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.setting-unit {
+  font-size: 14px;
+  color: #909399;
+  margin-left: 8px;
+}
+
+.battle-preview {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  padding: 12px;
+  background: rgba(64, 158, 255, 0.1);
+  border-radius: 8px;
+}
+
+.preview-item {
+  font-size: 14px;
+  color: #909399;
+}
+
+.preview-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #67c23a;
+  margin-left: 8px;
+}
+
+.battle-config-info {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(64, 158, 255, 0.05);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #909399;
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .battle-settings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .battle-preview {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
 }
 </style>

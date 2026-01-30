@@ -1,16 +1,27 @@
 <template>
   <div id="app">
-    <Home />
-    <div class="footer">
-      <p>&copy; 2026 小学数学四则运算出题工具</p>
+    <!-- Main Home Page -->
+    <div v-if="!isInBattleMode" class="main-app">
+      <Home />
+      <div class="footer">
+        <p>&copy; 2026 小学数学四则运算出题工具</p>
+      </div>
     </div>
+
+    <!-- Battle Page (full-screen immersive) -->
+    <BattlePage v-else />
   </div>
 </template>
 
 <script setup lang="ts">
-// modify by jx: implement root app component
+// modify by jx: implement root app component with battle mode support
 
 import Home from '@/views/Home.vue';
+import BattlePage from '@/views/BattlePage.vue';
+import { useBattleNavigation } from '@/composables/useBattleNavigation';
+
+// Get battle mode state
+const { isInBattleMode } = useBattleNavigation();
 </script>
 
 <style>
@@ -34,6 +45,10 @@ body {
 #app {
   min-height: 100vh;
   padding: 20px 0;
+}
+
+.main-app {
+  min-height: 100vh;
 }
 
 .footer {

@@ -653,3 +653,92 @@ export interface PatternTutoringPlan {
   suggestions: string[];              // Learning suggestions
   recommendedConfig?: Partial<PatternConfig>; // Recommended practice configuration
 }
+
+// ============================================================================
+// Battle Mode Types - Game Mode MVP
+// ============================================================================
+
+// Practice mode type with battle mode
+export type PracticeMode = 'practice' | 'answering' | 'battle';
+
+// Battle phase state
+export type BattlePhase = 'idle' | 'preparing' | 'answering' | 'ended';
+
+// Battle result type
+export type BattleResult = 'victory' | 'defeat' | 'retreat' | null;
+
+// Battle configuration
+export interface BattleConfig {
+  playerHP: number;           // Player health points (default: 100)
+  enemyHP: number;            // Enemy health points (default: 50)
+  enemyBaseAttack: number;    // Enemy base attack power (default: 10)
+  prepareTime: number;        // Preparation countdown time in seconds (default: 3)
+  questionTime: number;       // Question countdown time in seconds (default: 10.0)
+  enemyAttackInterval: number;// Enemy attack interval in seconds (default: 10)
+  questionCount: number;      // Number of questions (default: 20)
+  // modify by jx: removed difficulty field, questions use config from main settings
+}
+
+// Battle state
+export interface BattleState {
+  phase: BattlePhase;                    // Current battle phase
+  playerHP: number;                      // Player health points
+  enemyHP: number;                       // Enemy health points
+  enemyAttack: number;                   // Current enemy attack power
+  currentQuestion: Question | null;      // Current question
+  timeRemaining: number;                 // Remaining time for current question
+  battleResult: BattleResult;            // Battle result
+  questionCount: number;                 // Number of questions answered
+  correctCount: number;                  // Number of correct answers
+  combo: number;                         // Current combo streak
+  maxCombo: number;                      // Maximum combo streak
+  totalDamage: number;                   // Total damage dealt to enemy
+  isRetreated: boolean;                  // Whether player retreated
+}
+
+// Battle record for history
+export interface BattleRecord {
+  id: string;                    // Record ID
+  timestamp: Date;              // Battle timestamp
+  duration: number;             // Battle duration in seconds
+  result: 'victory' | 'defeat' | 'retreat'; // Battle result
+  questionType: string;         // Question type identifier
+  questionTypeName: string;     // Question type display name
+  config: {
+    playerHP: number;           // Player initial health
+    enemyHP: number;            // Enemy initial health
+    enemyBaseAttack: number;    // Enemy base attack
+    questionCount: number;      // Question count
+    // modify by jx: removed difficulty field
+  };
+  stats: {
+    totalQuestions: number;     // Total questions answered
+    correctAnswers: number;     // Correct answers count
+    accuracy: number;           // Accuracy percentage
+    maxCombo: number;           // Maximum combo streak
+    totalDamage: number;        // Total damage dealt
+    finalEnemyAttack: number;   // Final enemy attack power
+    remainingPlayerHP: number;  // Remaining player HP
+  };
+}
+
+// Battle question type for different math modules
+export type BattleQuestionType = 
+  | 'arithmetic' 
+  | 'equation' 
+  | 'fraction' 
+  | 'decimal' 
+  | 'percentage' 
+  | 'unit-conversion' 
+  | 'geometry' 
+  | 'factor-multiple' 
+  | 'prime-composite' 
+  | 'comparison' 
+  | 'pattern';
+
+// Battle settings for control panel
+export interface BattleSettings {
+  // modify by jx: removed difficulty field, questions use config from main settings
+  enemyHP: number;
+  questionTime: number;
+}
