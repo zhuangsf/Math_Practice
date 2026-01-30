@@ -179,7 +179,8 @@ describe('BattleEnemy Battle Flow Animation', () => {
       await wrapper.setProps({ isHit: true });
       await nextTick();
       expect(wrapper.find('.damage-popup').exists()).toBe(true);
-      expect(wrapper.find('.damage-popup').text()).toMatch(/^\d+$/);
+      // modify by jx: popup shows actual damage with minus sign e.g. -5.2
+      expect(wrapper.find('.damage-popup').text()).toMatch(/^-\d+(\.\d+)?$/);
       
       // Wait for popup to hide
       await new Promise(resolve => setTimeout(resolve, 400));
@@ -187,12 +188,12 @@ describe('BattleEnemy Battle Flow Animation', () => {
       // Second hit
       await wrapper.setProps({ isHit: false });
       await nextTick();
-      await wrapper.setProps({ isHit: true });
+      await wrapper.setProps({ isHit: true, lastDamage: 8.5 });
       await nextTick();
       
-      // Popup should show again
+      // Popup should show again with passed lastDamage
       expect(wrapper.find('.damage-popup').exists()).toBe(true);
-      expect(wrapper.find('.damage-popup').text()).toMatch(/^\d+$/);
+      expect(wrapper.find('.damage-popup').text()).toMatch(/^-\d+(\.\d+)?$/);
     });
   });
 });

@@ -39,7 +39,7 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">剩余HP</span>
-          <span class="detail-value success">{{ record.stats.remainingPlayerHP }}</span>
+          <span class="detail-value success">{{ (record.stats.remainingPlayerHP ?? 0).toFixed(1) }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">总伤害</span>
@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement battle result display dialog component
+// Terminology: 能量团 (victory/defeat copy). See README 战斗模式术语.
 
 import { computed } from 'vue';
 import type { BattleRecord, BattleResult } from '@/types';

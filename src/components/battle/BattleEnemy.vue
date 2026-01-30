@@ -35,10 +35,10 @@
         </div>
       </div>
 
-      <!-- Damage popup -->
+      <!-- Damage popup: show actual damage with minus sign in red; modify by jx: use lastDamage prop instead of random -->
       <Transition name="damage-popup">
-        <div v-if="showDamage" class="damage-popup" :class="damageType">
-          {{ damageValue }}
+        <div v-if="showDamage" class="damage-popup damage" :class="damageType">
+          -{{ typeof damageValue === 'number' ? damageValue.toFixed(1) : damageValue }}
         </div>
       </Transition>
     </div>
@@ -47,6 +47,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement battle enemy (energy ball) display component with animations
+// Terminology: 能量团=enemy (HP/ATK display, hit animation). See README 战斗模式术语.
 
 import { ref, watch, onMounted, nextTick } from 'vue';
 
@@ -54,6 +55,7 @@ interface Props {
   hp: number;
   maxHp: number;
   attack: number;
+  lastDamage?: number;  // modify by jx: actual damage dealt for popup display (from battle engine)
   isHit?: boolean;
   isAttacking?: boolean;
   shakeEnabled?: boolean;  // modify by jx: control shake animation
@@ -65,6 +67,7 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  lastDamage: 0,  // modify by jx: default 0 when not passed
   isHit: false,
   isAttacking: false,
   shakeEnabled: false  // modify by jx: default off to disable energy orb shake after starting battle
@@ -134,7 +137,7 @@ watch(() => props.isHit, (newVal, oldVal) => {
       console.log('[BattleEnemy][SHAKE_DEBUG] rAF done: animationKey set to', nextKey, 'class should be hit-anim-' + nextKey, { ts: Date.now() });
     });
 
-    showDamagePopup(calculateDamage(), 'damage');
+    showDamagePopup(props.lastDamage, 'damage');  // modify by jx: use actual damage from engine
     setTimeout(() => {
       emit('hitAnimationEnd');
     }, 300);
@@ -152,11 +155,6 @@ watch(() => props.isAttacking, (newVal) => {
     }, 500);
   }
 });
-
-function calculateDamage(): number {
-  // Simulate damage display based on current state
-  return Math.round(Math.random() * 10) + 5;
-}
 
 function showDamagePopup(value: number, type: 'damage' | 'buff') {
   damageValue.value = value;
@@ -324,7 +322,7 @@ function showDamagePopup(value: number, type: 'damage' | 'buff') {
   color: #f56c6c;
 }
 
-/* Damage popup */
+/* Damage popup: red font with minus sign for actual damage; modify by jx: use red for damage type */
 .damage-popup {
   position: absolute;
   top: -20px;
@@ -332,10 +330,13 @@ function showDamagePopup(value: number, type: 'damage' | 'buff') {
   transform: translateX(-50%);
   font-size: 24px;
   font-weight: 700;
-  color: #67c23a;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   animation: damage-float 0.8s ease-out forwards;
   pointer-events: none;
+}
+
+.damage-popup.damage {
+  color: #f56c6c;
 }
 
 .damage-popup.buff {

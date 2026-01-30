@@ -141,6 +141,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement control panel component for user configuration with battle mode navigation
+// Terminology: 能量团 (battle settings label, game mode copy). See README 战斗模式术语.
 
 import { reactive, ref, watch, computed } from 'vue';
 import type { QuestionConfig, BattleSettings } from '@/types';

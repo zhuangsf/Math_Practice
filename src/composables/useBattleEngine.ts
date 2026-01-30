@@ -1,8 +1,9 @@
 // Battle Engine Composable - Core logic for math battle mode
 // modify by jx: implement battle engine with countdown management, damage calculation, and battle state management
+// Terminology: 征服者=player (playerHP, log messages), 能量团=enemy (enemyHP, enemyAttack, log messages). See README 战斗模式术语.
 
 import { reactive, computed, onUnmounted } from 'vue';
-import type { BattleState, BattleConfig, BattleRecord, Question, BattleResult } from '@/types';
+import type { BattleState, BattleConfig, BattleRecord, Question, BattleResult, BattleLogEntry, BattleLogType } from '@/types';
 
 /**
  * Calculate damage based on remaining time
@@ -84,6 +85,12 @@ export function useBattleEngine(
   questionTypeName: string,
   questionGenerator: () => Question[]
 ) {
+  // modify by jx: helper to push battle log entry for right-side detail panel
+  function pushLog(type: BattleLogType, message: string, detail?: BattleLogEntry['detail']): void {
+    const id = `log_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    state.battleLog.push({ id, type, message, detail, timestamp: Date.now() });
+  }
+
   // Battle state
   const state = reactive<BattleState>({
     phase: 'idle',
@@ -98,7 +105,9 @@ export function useBattleEngine(
     combo: 0,
     maxCombo: 0,
     totalDamage: 0,
-    isRetreated: false
+    lastDamage: 0,  // modify by jx: last hit damage for popup display
+    isRetreated: false,
+    battleLog: []   // modify by jx: detailed battle log for right panel
   });
 
   // Timer references
@@ -142,6 +151,7 @@ export function useBattleEngine(
     if (state.phase !== 'answering' || state.battleResult) return;
 
     state.playerHP = Math.max(0, state.playerHP - state.enemyAttack);
+    pushLog('enemy_attack', `能量团攻击！征服者受到 ${state.enemyAttack} 伤害，征服者剩余 HP ${state.playerHP.toFixed(1)}`, { playerHP: state.playerHP, enemyAttack: state.enemyAttack });
 
     // Check if player is defeated
     if (state.playerHP <= 0) {
@@ -153,9 +163,10 @@ export function useBattleEngine(
   function handleTimeUp(): void {
     if (state.phase !== 'answering' || !state.currentQuestion) return;
 
-    // Wrong answer - increase enemy attack
+    const qNum = state.questionCount + 1;
     state.enemyAttack = updateEnemyAttack(state.enemyAttack);
     state.combo = 0;
+    pushLog('timeout', `第 ${qNum} 题 超时，能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: state.currentQuestion.expression, enemyAttack: state.enemyAttack });
 
     // Move to next question
     state.questionCount++;
@@ -172,18 +183,22 @@ export function useBattleEngine(
     const timeSpent = config.questionTime - state.timeRemaining;
     const isCorrect = answer === state.currentQuestion.answer;
 
+    const qNum = state.questionCount + 1;
+    const expr = state.currentQuestion.expression;
     if (isCorrect) {
-      // Calculate damage based on remaining time
       const damage = calculateDamage(timeSpent, config.questionTime);
+      state.lastDamage = damage;  // modify by jx: store for damage popup display
       state.enemyHP = Math.max(0, state.enemyHP - damage);
       state.totalDamage += damage;
       state.correctCount++;
       state.combo++;
       state.maxCombo = Math.max(state.maxCombo, state.combo);
+      const comboText = state.combo > 1 ? `，${state.combo} 连击` : '';
+      pushLog('correct', `第 ${qNum} 题 正确！${expr} = ${state.currentQuestion.answer}，造成 ${damage.toFixed(1)} 伤害，能量团剩余 HP ${state.enemyHP.toFixed(1)}${comboText}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, damage, combo: state.combo, enemyHP: state.enemyHP });
     } else {
-      // Wrong answer - increase enemy attack
       state.enemyAttack = updateEnemyAttack(state.enemyAttack);
       state.combo = 0;
+      pushLog('wrong', `第 ${qNum} 题 错误（${expr} = ${state.currentQuestion.answer}），能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, enemyAttack: state.enemyAttack });
     }
 
     state.questionCount++;
@@ -211,6 +226,9 @@ export function useBattleEngine(
   function endBattle(result: BattleResult): void {
     state.phase = 'ended';
     state.battleResult = result;
+    if (result === 'victory') pushLog('victory', '战斗胜利！驯服能量团成功。');
+    else if (result === 'defeat') pushLog('defeat', '战斗失败，征服者 HP 归零。');
+    else if (result === 'retreat') pushLog('retreat', '已撤退。');
     clearAllTimers();
   }
 
@@ -243,7 +261,8 @@ export function useBattleEngine(
     // Clear any existing timers
     clearAllTimers();
 
-    // Reset state
+    // Reset state and clear log for new battle; modify by jx: push battle start log
+    state.battleLog = [];
     state.phase = 'answering';
     state.playerHP = config.playerHP;
     state.enemyHP = config.enemyHP;
@@ -254,9 +273,11 @@ export function useBattleEngine(
     state.combo = 0;
     state.maxCombo = 0;
     state.totalDamage = 0;
+    state.lastDamage = 0;  // modify by jx: reset last damage on battle start
     state.isRetreated = false;
     state.currentQuestion = getNextQuestion();
     state.timeRemaining = config.questionTime;
+    pushLog('phase', '战斗开始！');
 
     lastTimeUpdate = Date.now();
 
@@ -295,7 +316,9 @@ export function useBattleEngine(
     state.combo = 0;
     state.maxCombo = 0;
     state.totalDamage = 0;
+    state.lastDamage = 0;  // modify by jx: reset last damage on battle reset
     state.isRetreated = false;
+    state.battleLog = [];  // modify by jx: clear log on reset
   }
 
   // Get battle record

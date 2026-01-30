@@ -4,7 +4,7 @@
     <div class="hud-section player-section">
       <div class="hud-header">
         <span class="hud-icon">🧙</span>
-        <span class="hud-label">玩家</span>
+        <span class="hud-label">征服者</span>
       </div>
       <div class="hp-bar-container">
         <div
@@ -14,7 +14,7 @@
         ></div>
       </div>
       <div class="hp-text">
-        {{ Math.round(currentPlayerHP) }} / {{ playerMaxHp }}
+        {{ Math.round(currentPlayerHP * 10) / 10 }} / {{ playerMaxHp }}
       </div>
     </div>
 
@@ -64,6 +64,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement battle HUD component showing player/enemy HP and battle stats
+// Terminology: 征服者=player (player-section, playerHP), 能量团=enemy (enemy-section, enemyHP). See README 战斗模式术语.
 
 import { computed } from 'vue';
 import type { BattleState } from '@/types';

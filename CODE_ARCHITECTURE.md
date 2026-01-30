@@ -36,25 +36,37 @@ Math_Practice/
 │   ├── components/              # 组件目录
 │   │   ├── ControlPanel.vue     # 控制面板组件
 │   │   ├── QuestionDisplay.vue  # 题目显示组件
-│   │   ├── ActionButtons.vue    # 操作按钮组件
-│   │   └── ExportModal.vue      # 导出弹窗组件
+│   │   ├── ActionButtons.vue   # 操作按钮组件
+│   │   ├── ExportModal.vue     # 导出弹窗组件
+│   │   ├── SettingsDialog.vue  # 设置弹窗组件
+│   │   └── battle/             # 战斗模式相关组件（征服者/能量团，见 README）
+│   │       ├── BattleHUD.vue   # 战斗 HUD（血量等）
+│   │       ├── BattleEnemy.vue # 能量团展示
+│   │       └── BattleResult.vue# 战斗结果
 │   │
 │   ├── composables/             # 组合式函数（Composition API）
-│   │   ├── useQuestionGenerator.ts    # 题目生成逻辑
-│   │   ├── useExport.ts                 # 导出功能逻辑
-│   │   └── useLocalStorage.ts           # 本地存储逻辑
+│   │   ├── useQuestionGenerator.ts  # 题目生成逻辑
+│   │   ├── useExport.ts             # 导出功能逻辑
+│   │   ├── useBattleEngine.ts      # 战斗引擎（伤害、回合等）
+│   │   ├── useBattleNavigation.ts  # 战斗页面导航
+│   │   ├── useAnswering.ts         # 答题逻辑
+│   │   ├── useScoring.ts           # 评分逻辑
+│   │   └── ...                    # 其他题型生成与工具
 │   │
 │   ├── utils/                   # 工具函数
 │   │   ├── mathUtils.ts         # 数学运算工具函数
 │   │   ├── validationUtils.ts   # 验证工具函数
-│   │   ├── exportUtils.ts      # 导出工具函数
+│   │   ├── exportUtils.ts       # 导出工具函数
 │   │   └── numberUtils.ts       # 数字生成工具函数
 │   │
 │   ├── types/                   # TypeScript类型定义
-│   │   └── index.ts             # 全局类型定义
+│   │   └── index.ts             # 全局类型定义（含战斗相关类型）
 │   │
 │   ├── views/                   # 页面视图
-│   │   └── Home.vue             # 主页面
+│   │   ├── Home.vue             # 主页面
+│   │   ├── ArithmeticPage.vue   # 四则运算页面
+│   │   ├── BattlePage.vue       # 战斗页面（征服四则运算等）
+│   │   └── ...                  # 其他题型页面
 │   │
 │   ├── App.vue                  # 根组件
 │   └── main.ts                  # 应用入口
@@ -293,7 +305,7 @@ interface HistoryItem {
 const config = ref<QuestionConfig>({
   operandCount: 2,
   minValue: 0,
-  maxValue: 1000,
+  maxValue: 20,  // modify by jx: default changed from 1000 to 20
   operations: ['add', 'subtract', 'multiply', 'divide'],
   questionCount: 20
 });
@@ -469,6 +481,20 @@ npm run build
 - 可以部署到任何静态文件服务器（如Nginx、Apache）
 - 可以部署到GitHub Pages
 - 可以部署到Vercel、Netlify等平台
+
+---
+
+## 12. 战斗模式术语（Terminology）
+
+战斗模式中使用的产品术语与代码对应关系，详见 **README.md 战斗模式与术语** 小节。简要对照：
+
+| 术语 | 代码对应 |
+|------|----------|
+| 征服者 | `playerHP`、`player-section`、BattleHUD 标签、战斗信息 log |
+| 能量团 | `enemyHP`、`enemyAttack`、BattleEnemy、战斗信息 log |
+| 征服四则运算 | BattlePage 页面标题、`document.title` |
+
+搜索关键词：`征服者`、`能量团`、`征服四则运算` 可定位到对应文案与逻辑所在文件。
 
 ---
 

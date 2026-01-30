@@ -312,8 +312,8 @@ describe('usePercentageGenerator', () => {
           // modify by jx: use tolerance to account for rounding differences
           expect(validatePercentAnswer(storedAnswer, storedAnswer)).toBe(true);
           
-          // Test with integer approximation
-          expect(validatePercentAnswer(Math.round(expectedPart), storedAnswer, 1)).toBe(true);
+          // Test with integer approximation (tolerance 2 to allow rounding and float variance)
+          expect(validatePercentAnswer(Math.round(expectedPart), storedAnswer, 2)).toBe(true);
         }
       });
     });

@@ -55,6 +55,7 @@
         :hp="battleState.enemyHP"
         :max-hp="battleConfig.enemyHP"
         :attack="battleState.enemyAttack"
+        :last-damage="battleState.lastDamage ?? 0"
         :is-hit="isEnemyHit"
         :is-attacking="isEnemyAttacking"
         :shake-enabled="shakeEnabled"
@@ -175,6 +176,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement arithmetic page with battle mode support
+// Terminology: 能量团 (battle-hint copy). See README 战斗模式术语.
 
 import { ref, computed, watch, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
@@ -210,7 +212,7 @@ function logDebug(...args: any[]) {
 const defaultConfig: QuestionConfig = {
   operandCount: 2,
   minValue: 0,
-  maxValue: 1000,
+  maxValue: 20,  // modify by jx: change default from 1000 to 20 for arithmetic value range max
   operations: ['add', 'subtract', 'multiply', 'divide'],
   questionCount: 20
 };

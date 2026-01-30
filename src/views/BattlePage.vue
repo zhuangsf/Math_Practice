@@ -36,7 +36,7 @@
       <div class="battle-header">
         <div class="battle-title">
           <span class="title-icon">⚔️</span>
-          <span class="title-text">{{ questionTypeName }} - 能量团战斗</span>
+          <span class="title-text">征服四则运算</span>
         </div>
         <div class="battle-status">
           <span v-if="battleState.phase === 'preparing'" class="status-preparing">
@@ -94,24 +94,26 @@
         </div>
       </div>
 
-      <!-- Active Battle Screen -->
+      <!-- Active Battle Screen: left arena + right battle log; modify by jx: add right-side battle info panel -->
       <div v-else class="battle-active-screen">
-        <!-- Battle HUD -->
-        <BattleHUD
-          :state="battleState"
-          :player-max-hp="battleConfig.playerHP"
-          :enemy-max-hp="battleConfig.enemyHP"
-          :total-questions="battleConfig.questionCount"
-        />
+        <div class="battle-active-main">
+          <!-- Battle HUD -->
+          <BattleHUD
+            :state="battleState"
+            :player-max-hp="battleConfig.playerHP"
+            :enemy-max-hp="battleConfig.enemyHP"
+            :total-questions="battleConfig.questionCount"
+          />
 
-        <!-- Battle Arena -->
-        <div class="battle-arena">
+          <!-- Battle Arena -->
+          <div class="battle-arena">
           <!-- Enemy (Energy Ball) -->
           <BattleEnemy
             :key="hitAnimationKey"
             :hp="battleState.enemyHP"
             :max-hp="battleConfig.enemyHP"
             :attack="battleState.enemyAttack"
+            :last-damage="battleState.lastDamage ?? 0"
             :is-hit="isEnemyHit"
             :is-attacking="isEnemyAttacking"
             :shake-enabled="shakeEnabled"
@@ -144,7 +146,26 @@
               🔥 {{ battleState.combo }} 连击
             </span>
           </div>
+          </div>
         </div>
+
+        <!-- Right: Battle Log Panel -->
+        <aside class="battle-log-panel">
+          <div class="battle-log-title">战斗信息</div>
+          <div class="battle-log-list" ref="battleLogListRef">
+            <div
+              v-for="entry in battleState.battleLog"
+              :key="entry.id"
+              class="battle-log-entry"
+              :class="`log-${entry.type}`"
+            >
+              <span class="log-message">{{ entry.message }}</span>
+            </div>
+            <div v-if="battleState.battleLog.length === 0" class="battle-log-empty">
+              暂无战斗记录
+            </div>
+          </div>
+        </aside>
       </div>
 
       <!-- ESC Hint (always visible during battle) -->
@@ -157,8 +178,9 @@
 
 <script setup lang="ts">
 // modify by jx: implement immersive battle page component with full-screen layout
+// Terminology: 征服四则运算=page title (title-text, document.title). 征服者/能量团 see README 战斗模式术语.
 
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Warning } from '@element-plus/icons-vue';
 import BattleHUD from '@/components/battle/BattleHUD.vue';
@@ -195,6 +217,7 @@ const isSubmittingAnswer = ref(false);
 const showRetreatDialog = ref(false);
 const battleQuestionRef = ref<InstanceType<typeof BattleQuestion> | null>(null);
 const hitAnimationKey = ref(0);  // modify by jx: use unique key for each hit animation
+const battleLogListRef = ref<HTMLElement | null>(null);  // modify by jx: ref for auto-scroll battle log
 
 // Get game settings - keep ref structure for proper reactivity
 // modify by jx: fix destructuring issue that causes undefined error
@@ -206,7 +229,7 @@ const battleState = computed(() => {
   if (battleEngine.value?.state) {
     return battleEngine.value.state;
   }
-  // Default idle state
+  // Default idle state; modify by jx: include battleLog for right panel
   return {
     phase: 'idle' as const,
     playerHP: battleConfig.value.playerHP,
@@ -220,9 +243,35 @@ const battleState = computed(() => {
     combo: 0,
     maxCombo: 0,
     totalDamage: 0,
-    isRetreated: false
+    isRetreated: false,
+    battleLog: []
   };
 });
+
+// modify by jx: auto-scroll battle log to bottom when new entry is added
+watch(
+  () => battleState.value.battleLog.length,
+  () => {
+    nextTick(() => {
+      const el = battleLogListRef.value;
+      if (el) el.scrollTop = el.scrollHeight;
+    });
+  }
+);
+
+// modify by jx: when engine ends with defeat (e.g. player HP<=0 from enemy attack timer), show result dialog immediately
+watch(
+  () => ({ phase: battleState.value.phase, battleResult: battleState.value.battleResult }),
+  ({ phase, battleResult: result }) => {
+    if (phase !== 'ended' || result !== 'defeat') return;
+    if (showBattleResult.value) return;
+    if (!battleEngine.value) return;
+    battleRecord.value = battleEngine.value.getBattleRecord();
+    battleResult.value = 'defeat';
+    showBattleResult.value = true;
+  },
+  { flush: 'sync' }
+);
 
 // Question type name for display
 const questionTypeName = computed(() => currentQuestionTypeName.value || '四则运算');
@@ -369,12 +418,17 @@ function handleKeydown(event: KeyboardEvent) {
   }
 }
 
+// modify by jx: set page title when entering battle, restore when leaving
+const defaultDocumentTitle = '小学数学四则运算出题工具';
+
 // Lifecycle hooks
 onMounted(() => {
+  document.title = '征服四则运算';
   window.addEventListener('keydown', handleKeydown);
 });
 
 onUnmounted(() => {
+  document.title = defaultDocumentTitle;
   window.removeEventListener('keydown', handleKeydown);
   if (battleEngine.value) {
     battleEngine.value.clearAllTimers();
@@ -589,12 +643,20 @@ onUnmounted(() => {
   border-radius: 16px;
 }
 
-/* Active Battle Screen */
+/* Active Battle Screen: left main + right log; modify by jx: add right panel layout */
 .battle-active-screen {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   padding: 12px;
+  min-height: 0;
+}
+
+.battle-active-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .battle-arena {
@@ -624,6 +686,95 @@ onUnmounted(() => {
 .combo-display {
   color: #e6a23c;
   font-weight: 600;
+}
+
+/* Right: Battle Log Panel; modify by jx: detailed battle info panel */
+.battle-log-panel {
+  width: 320px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.25);
+  margin-left: 12px;
+  border-radius: 0 12px 12px 0;
+  overflow: hidden;
+}
+
+.battle-log-title {
+  padding: 12px 16px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+}
+
+.battle-log-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.battle-log-entry {
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 8px;
+  word-break: break-word;
+}
+
+.log-phase {
+  color: #409eff;
+  background: rgba(64, 158, 255, 0.12);
+}
+
+.log-correct {
+  color: #67c23a;
+  background: rgba(103, 194, 58, 0.12);
+}
+
+.log-wrong {
+  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.12);
+}
+
+.log-timeout {
+  color: #e6a23c;
+  background: rgba(230, 162, 60, 0.12);
+}
+
+.log-enemy_attack {
+  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.15);
+}
+
+.log-victory {
+  color: #67c23a;
+  background: rgba(103, 194, 58, 0.2);
+  font-weight: 600;
+}
+
+.log-defeat {
+  color: #f56c6c;
+  background: rgba(245, 108, 108, 0.2);
+  font-weight: 600;
+}
+
+.log-retreat {
+  color: #909399;
+  background: rgba(144, 147, 153, 0.15);
+}
+
+.battle-log-empty {
+  padding: 24px 16px;
+  font-size: 14px;
+  color: #909399;
+  text-align: center;
 }
 
 /* ESC Hint */
@@ -712,6 +863,20 @@ onUnmounted(() => {
   .battle-stats {
     flex-wrap: wrap;
     gap: 16px;
+  }
+
+  /* modify by jx: stack battle log below arena on small screens */
+  .battle-active-screen {
+    flex-direction: column;
+  }
+
+  .battle-log-panel {
+    width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    margin-top: 12px;
+    max-height: 200px;
+    border-radius: 12px;
   }
 }
 </style>

@@ -7,7 +7,7 @@
 ### 四则运算功能
 - ✅ **多种运算模式**：支持二元、三元、四元运算
 - ✅ **四种运算类型**：加法、减法、乘法、除法（可多选）
-- ✅ **灵活的数值范围**：可自定义最小值和最大值（默认0-1000）
+- ✅ **灵活的数值范围**：可自定义最小值和最大值（默认0-20）
 - ✅ **题目数量选择**：支持20、50、100题三种选项
 - ✅ **答案显示控制**：可选择是否显示答案
 - ✅ **题目质量保证**：所有除法题目保证整除，不会生成以0作为被除数的无效题目
@@ -129,6 +129,23 @@
 - ✅ **打印功能**：直接打印题目
 - ✅ **4列布局**：题目以4列网格显示，适合打印
 
+### 战斗模式与术语
+
+战斗模式中，用户通过快速答题对“能量团”造成伤害并驯服它；界面与文案统一使用以下术语，便于与代码对应。
+
+| 术语 | 含义 | 代码对应 |
+|------|------|----------|
+| **征服者** | 玩家角色 | `playerHP`、`player-section`、BattleHUD 中“征服者”标签、战斗信息中的“征服者” |
+| **能量团** | 敌方单位（答题目标） | `enemyHP`、`enemyAttack`、`enemy-section`、BattleEnemy 显示、战斗信息中的“能量团” |
+| **征服四则运算** | 四则运算战斗界面标题 | `BattlePage.vue` 页面标题与 `document.title`（当前仅四则运算支持战斗） |
+| **征服分数运算** | 分数运算战斗界面标题（预留） | 后续分数战斗可复用同一 BattlePage，仅标题/题型名不同 |
+
+**术语与代码位置对照**（便于搜索与维护）：
+
+- **征服者** 文案与逻辑：`src/components/battle/BattleHUD.vue`（HUD 标签）、`src/composables/useBattleEngine.ts`（战斗信息 log）、`src/types/index.ts`（`playerHP` 等）
+- **能量团** 文案与逻辑：`src/components/battle/BattleHUD.vue`、`src/components/battle/BattleEnemy.vue`、`src/composables/useBattleEngine.ts`、`src/views/BattlePage.vue`、`src/components/battle/BattleResult.vue`、`src/components/ControlPanel.vue`、`src/views/ArithmeticPage.vue`、`src/components/SettingsDialog.vue`
+- **征服四则运算**：`src/views/BattlePage.vue`（`title-text`、`document.title`）
+
 ## 技术栈
 
 - **Vue 3** - 渐进式JavaScript框架
@@ -193,17 +210,17 @@ Math_Practice/
 │   │   ├── PatternTutoringPlan.vue  # 找规律辅导计划
 │   │   ├── PatternWrongQuestionAnalysis.vue  # 找规律错题分析
 │   │   ├── SettingsDialog.vue  # 设置对话框（游戏/答题配置）
-│   │   └── battle/             # 对战模式组件
-│   │       ├── BattleEnemy.vue     # 对战敌人显示
+│   │   └── battle/             # 战斗模式组件（征服者 vs 能量团，见 README 战斗模式术语）
+│   │       ├── BattleEnemy.vue     # 能量团显示（HP/ATK、受击动画）
 │   │       ├── BattleEnemy.test.ts # BattleEnemy 单元测试
-│   │       ├── BattleQuestion.vue  # 对战题目
-│   │       ├── BattleHUD.vue       # 对战 HUD
-│   │       ├── BattleResult.vue    # 对战结果
-│   │       └── BattleTimer.vue     # 对战计时
+│   │       ├── BattleQuestion.vue  # 战斗题目
+│   │       ├── BattleHUD.vue       # 征服者/能量团 HUD（血量、题目、连击）
+│   │       ├── BattleResult.vue    # 战斗结果（胜利/失败/撤退）
+│   │       └── BattleTimer.vue     # 答题倒计时
 │   ├── composables/             # 组合式函数
 │   │   ├── useQuestionGenerator.ts  # 四则运算题目生成逻辑
-│   │   ├── useBattleEngine.ts   # 对战引擎逻辑
-│   │   ├── useBattleNavigation.ts  # 对战导航
+│   │   ├── useBattleEngine.ts   # 战斗引擎（征服者/能量团 HP、伤害、战斗信息 log）
+│   │   ├── useBattleNavigation.ts  # 进入/退出战斗导航
 │   │   ├── useGameSettings.ts   # 游戏设置（持久化）
 │   │   ├── useEquationGenerator.ts  # 一元一次方程生成逻辑
 │   │   ├── useFractionGenerator.ts  # 分数运算生成逻辑
@@ -247,7 +264,7 @@ Math_Practice/
 │   │   ├── PrimeCompositePage.vue  # 质数合数页面
 │   │   ├── ComparisonPage.vue   # 比较大小页面
 │   │   ├── PatternPage.vue      # 找规律页面
-│   │   └── BattlePage.vue        # 对战模式页面
+│   │   └── BattlePage.vue        # 战斗页面（征服四则运算等，见 README 战斗模式术语）
 │   ├── App.vue                  # 根组件
 │   └── main.ts                  # 应用入口
 ├── electron/                    # Electron相关文件

@@ -667,11 +667,30 @@ export type BattlePhase = 'idle' | 'preparing' | 'answering' | 'ended';
 // Battle result type
 export type BattleResult = 'victory' | 'defeat' | 'retreat' | null;
 
-// Battle configuration
+// Battle log entry for detailed battle info panel; modify by jx: add for right-side battle log
+export type BattleLogType = 'phase' | 'correct' | 'wrong' | 'timeout' | 'enemy_attack' | 'victory' | 'defeat' | 'retreat';
+
+export interface BattleLogEntry {
+  id: string;                     // Unique id for list key
+  type: BattleLogType;            // Log type for styling
+  message: string;                // Display message (e.g. Chinese)
+  detail?: {                      // Optional structured detail
+    questionNum?: number;
+    expression?: string;
+    answer?: number;
+    damage?: number;
+    combo?: number;
+    playerHP?: number;
+    enemyAttack?: number;
+  };
+  timestamp: number;              // Time in ms for ordering
+}
+
+// Battle configuration (Terminology: 征服者=player, 能量团=enemy. See README 战斗模式术语.)
 export interface BattleConfig {
-  playerHP: number;           // Player health points (default: 100)
-  enemyHP: number;            // Enemy health points (default: 50)
-  enemyBaseAttack: number;    // Enemy base attack power (default: 10)
+  playerHP: number;           // 征服者 HP (default: 100)
+  enemyHP: number;            // 能量团 HP (default: 50)
+  enemyBaseAttack: number;    // 能量团基础攻击力 (default: 10)
   prepareTime: number;        // Preparation countdown time in seconds (default: 3)
   questionTime: number;       // Question countdown time in seconds (default: 10.0)
   enemyAttackInterval: number;// Enemy attack interval in seconds (default: 10)
@@ -679,12 +698,12 @@ export interface BattleConfig {
   // modify by jx: removed difficulty field, questions use config from main settings
 }
 
-// Battle state
+// Battle state (Terminology: 征服者=player, 能量团=enemy. See README 战斗模式术语.)
 export interface BattleState {
   phase: BattlePhase;                    // Current battle phase
-  playerHP: number;                      // Player health points
-  enemyHP: number;                       // Enemy health points
-  enemyAttack: number;                   // Current enemy attack power
+  playerHP: number;                      // 征服者 HP
+  enemyHP: number;                       // 能量团 HP
+  enemyAttack: number;                   // 能量团当前攻击力
   currentQuestion: Question | null;      // Current question
   timeRemaining: number;                 // Remaining time for current question
   battleResult: BattleResult;            // Battle result
@@ -693,7 +712,9 @@ export interface BattleState {
   combo: number;                         // Current combo streak
   maxCombo: number;                      // Maximum combo streak
   totalDamage: number;                   // Total damage dealt to enemy
+  lastDamage: number;                    // Last single hit damage (for popup display); modify by jx: add for actual damage popup
   isRetreated: boolean;                  // Whether player retreated
+  battleLog: BattleLogEntry[];           // modify by jx: detailed battle log for right panel
 }
 
 // Battle record for history

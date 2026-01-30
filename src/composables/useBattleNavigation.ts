@@ -17,7 +17,7 @@ interface BattleNavigationState {
 const defaultQuestionConfig: QuestionConfig = {
   operandCount: 2,
   minValue: 0,
-  maxValue: 1000,
+  maxValue: 20,  // modify by jx: change default from 1000 to 20 for arithmetic value range max
   operations: ['add', 'subtract', 'multiply', 'divide'],
   questionCount: 20
 };

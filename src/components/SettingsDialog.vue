@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 // modify by jx: implement settings dialog for game configuration
+// Terminology: 能量团 (shake description). See README 战斗模式术语.
 
 import { ref, watch } from 'vue';
 
