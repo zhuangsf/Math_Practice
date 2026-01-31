@@ -89,12 +89,11 @@
     <template #footer>
       <div class="result-actions">
         <el-button
-          v-if="hasWrongQuestions"
           type="warning"
           size="large"
-          @click="showWrongQuestionDialog = true"
+          @click="showReviewDialog = true"
         >
-          📋 查看错题
+          📊 战况复盘
         </el-button>
         <el-button size="large" @click="handleRematch">
           🔄 再战一场
@@ -105,11 +104,10 @@
       </div>
     </template>
 
-    <!-- Wrong Question Dialog; modify by jx: add for settlement wrong-question review -->
-    <BattleWrongQuestionDialog
-      v-model="showWrongQuestionDialog"
-      :wrong-questions="record.wrongQuestions ?? []"
-      :total-questions="record.stats.totalQuestions"
+    <!-- Battle Review Dialog; modify by jx: add for battle review with time analysis -->
+    <BattleReviewDialog
+      v-model="showReviewDialog"
+      :record="record"
     />
   </el-dialog>
 </template>
@@ -119,7 +117,7 @@
 // Terminology: 能量团 (victory/defeat copy). See README 战斗模式术语.
 
 import { ref, computed } from 'vue';
-import BattleWrongQuestionDialog from './BattleWrongQuestionDialog.vue';
+import BattleReviewDialog from './BattleReviewDialog.vue';
 import type { BattleRecord, BattleResult } from '@/types';
 
 interface Props {
@@ -137,11 +135,7 @@ interface Emits {
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
-const showWrongQuestionDialog = ref(false);
-
-const hasWrongQuestions = computed(
-  () => (props.record.wrongQuestions?.length ?? 0) > 0
-);
+const showReviewDialog = ref(false);
 
 // Visible state
 const visible = computed({

@@ -709,6 +709,7 @@ export interface BattleWrongQuestion {
   operationType: OperationType;
   operandCount: 2 | 3 | 4;
   isTimeout: boolean;
+  timeSpent?: number;            // modify by jx: add timeSpent for battle review time analysis
 }
 
 // Battle state (Terminology: 征服者=player, 能量团=enemy. See README 战斗模式术语.)
@@ -729,6 +730,7 @@ export interface BattleState {
   isRetreated: boolean;                  // Whether player retreated
   battleLog: BattleLogEntry[];           // modify by jx: detailed battle log for right panel
   wrongQuestions: BattleWrongQuestion[]; // modify by jx: wrong questions for settlement review
+  questionTimes: number[];               // modify by jx: time spent for each question (in seconds), used for battle review
 }
 
 // Battle record for history
@@ -756,6 +758,7 @@ export interface BattleRecord {
     remainingPlayerHP: number;  // Remaining player HP
   };
   wrongQuestions?: BattleWrongQuestion[]; // modify by jx: wrong questions for settlement review
+  questionTimes?: number[];       // modify by jx: time spent for each question (in seconds), used for battle review
 }
 
 // Battle question type for different math modules

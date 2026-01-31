@@ -88,6 +88,10 @@ export function createBattleRecord(
   if (state.wrongQuestions?.length) {
     record.wrongQuestions = [...state.wrongQuestions];
   }
+  // modify by jx: include question times for battle review
+  if (state.questionTimes?.length) {
+    record.questionTimes = [...state.questionTimes];
+  }
   return record;
 }
 
@@ -114,6 +118,8 @@ export function useBattleEngine(
     const q = state.currentQuestion!;
     const operationType: OperationType = q.operators?.[0] ?? 'add';
     const operandCount = (Math.min(4, Math.max(2, (q.operators?.length ?? 1) + 1)) || 2) as 2 | 3 | 4;
+    // modify by jx: calculate and store timeSpent for battle review analysis
+    const timeSpent = isTimeout ? config.questionTime : (config.questionTime - state.timeRemaining);
     return {
       questionId: q.id,
       question: q,
@@ -121,7 +127,8 @@ export function useBattleEngine(
       correctAnswer: q.answer,
       operationType,
       operandCount,
-      isTimeout
+      isTimeout,
+      timeSpent
     };
   }
 
@@ -142,7 +149,8 @@ export function useBattleEngine(
     lastDamage: 0,  // modify by jx: last hit damage for popup display
     isRetreated: false,
     battleLog: [],  // modify by jx: detailed battle log for right panel
-    wrongQuestions: []  // modify by jx: wrong questions for settlement review
+    wrongQuestions: [],  // modify by jx: wrong questions for settlement review
+    questionTimes: []  // modify by jx: time spent for each question (in seconds), used for battle review
   });
 
   // Timer references
@@ -206,6 +214,8 @@ export function useBattleEngine(
     state.combo = 0;
     // modify by jx: record wrong question for settlement review
     state.wrongQuestions.push(buildWrongQuestion(null, true));
+    // modify by jx: record time spent for this question (timeout = full question time)
+    state.questionTimes.push(config.questionTime);
     pushLog('timeout', `第 ${qNum} 题 超时，能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: state.currentQuestion.expression, enemyAttack: state.enemyAttack });
 
     // Move to next question
@@ -244,6 +254,8 @@ export function useBattleEngine(
       state.wrongQuestions.push(buildWrongQuestion(answer, false));
       pushLog('wrong', `第 ${qNum} 题 错误（${expr} = ${state.currentQuestion.answer}），能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, enemyAttack: state.enemyAttack });
     }
+    // modify by jx: record time spent for this question
+    state.questionTimes.push(timeSpent);
 
     state.questionCount++;
 
