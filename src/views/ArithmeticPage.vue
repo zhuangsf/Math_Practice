@@ -1,20 +1,11 @@
 <template>
   <div class="arithmetic-page" :class="{ 'battle-mode': answerMode === 'battle' }">
     
-    <!-- Header -->
+    <!-- Header - modify by jx: settings button moved to Home.vue as common option -->
     <div class="header">
       <div class="header-left">
         <h2 class="title">四则运算题目生成</h2>
         <p class="subtitle">支持加减乘除多种运算模式</p>
-      </div>
-      <div class="header-right">
-        <el-button
-          class="settings-button"
-          circle
-          @click="showSettingsDialog = true"
-        >
-          <el-icon><Setting /></el-icon>
-        </el-button>
       </div>
     </div>
 
@@ -164,13 +155,6 @@
       @rematch="handleRematch"
       @return="handleReturnFromBattle"
     />
-
-    <!-- Settings Dialog -->
-    <SettingsDialog
-      v-model="showSettingsDialog"
-      v-model:shake-enabled="shakeEnabled"
-      @confirm="handleSettingsConfirm"
-    />
   </div>
 </template>
 
@@ -178,9 +162,8 @@
 // modify by jx: implement arithmetic page with battle mode support
 // Terminology: 能量团 (battle-hint copy). See README 战斗模式术语.
 
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue';
 import { ElMessage } from 'element-plus';
-import { Setting } from '@element-plus/icons-vue';
 import ControlPanel from '@/components/ControlPanel.vue';
 import QuestionDisplay from '@/components/QuestionDisplay.vue';
 import ActionButtons from '@/components/ActionButtons.vue';
@@ -192,7 +175,6 @@ import BattleEnemy from '@/components/battle/BattleEnemy.vue';
 import BattleTimer from '@/components/battle/BattleTimer.vue';
 import BattleQuestion from '@/components/battle/BattleQuestion.vue';
 import BattleResult from '@/components/battle/BattleResult.vue';
-import SettingsDialog from '@/components/SettingsDialog.vue';
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
 import { useExport } from '@/composables/useExport';
 import { useAnswering } from '@/composables/useAnswering';
@@ -201,6 +183,7 @@ import { extractWrongQuestions, calculateWrongQuestionStats } from '@/composable
 import { generateTutoringPlan } from '@/composables/useTutoringPlan';
 import { useBattleEngine } from '@/composables/useBattleEngine';
 import { useGameSettings } from '@/composables/useGameSettings';
+import { useBattleSounds } from '@/composables/useBattleSounds';
 import type { QuestionConfig, ScoreResult, WrongQuestionStats, WrongQuestion, TutoringPlan, BattleConfig, BattleSettings, BattleRecord, BattleResult as BattleResultType } from '@/types';
 
 // Debug logging
@@ -240,9 +223,6 @@ const battleSettings = ref<BattleSettings>({
   questionTime: 10.0
 });
 
-// Settings state
-const showSettingsDialog = ref(false);
-
 // Get game settings - modify by jx: use global settings state with proper reactivity
 const gameSettingsRef = useGameSettings();
 const shakeEnabled = computed({
@@ -269,6 +249,9 @@ const { isGenerating, questions, generateQuestions, clearQuestions } = useQuesti
 
 // Use export composable
 const { isExporting, exportToTxt, exportToPdf, exportToExcel, printQuestions } = useExport();
+
+// modify by jx: battle sound effects
+const battleSounds = useBattleSounds();
 
 // Battle state and engine
 const battleEngine = ref<ReturnType<typeof useBattleEngine> | null>(null);
@@ -315,6 +298,15 @@ function initBattleEngine() {
         questionCount: 1
       });
       return generated.length > 0 ? generated : [];
+    },
+    {
+      playCorrect: (combo) => battleSounds.playCorrect(combo),
+      playWrong: () => battleSounds.playWrong(),
+      playAttack: () => battleSounds.playAttack(),
+      playDefeat: () => battleSounds.playDefeat(),
+      playVictory: () => battleSounds.playVictory(),
+      playBattleBg: () => battleSounds.playBattleBg(),
+      stopBattleBg: () => battleSounds.stopBattleBg()
     }
   );
   
@@ -327,13 +319,6 @@ function handleStartBattle() {
   battleEngine.value?.initializeBattle();
   battleEngine.value?.startPrepareTimer();
   ElMessage.info('准备进入战斗！');
-}
-
-// Settings handlers
-function handleSettingsConfirm(settings: { shakeEnabled: boolean }) {
-  console.log('[ArithmeticPage] Settings confirmed:', settings);
-  console.log('[ArithmeticPage] Current global shakeEnabled:', gameSettingsRef.value?.shakeEnabled);
-  ElMessage.success('设置已保存');
 }
 
 // modify by jx: wrapper so we always log when BattleQuestion emits submit (proves event reached parent)
@@ -471,6 +456,11 @@ watch(questions, (newQuestions) => {
   if (newQuestions.length > 0 && answerMode.value === 'answering') {
     initializeAnswers();
   }
+});
+
+// modify by jx: stop battle bg music when leaving page
+onUnmounted(() => {
+  battleSounds.stopBattleBg();
 });
 
 // Student answers map for QuestionDisplay component
@@ -691,19 +681,6 @@ const handlePrint = (includeAnswers: boolean) => {
 
 .header-left {
   text-align: left;
-}
-
-.header-right {
-  flex-shrink: 0;
-}
-
-.settings-button {
-  width: 44px;
-  height: 44px;
-}
-
-.settings-button .el-icon {
-  font-size: 20px;
 }
 
 .title {

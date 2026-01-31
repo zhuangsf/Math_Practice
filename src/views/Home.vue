@@ -1,10 +1,29 @@
 <template>
   <div class="home">
-    <!-- Header -->
+    <!-- Header - modify by jx: settings button moved to title right as common option -->
     <div class="header">
-      <h1 class="title">小学数学题目生成工具</h1>
+      <div class="header-row">
+        <h1 class="title">小学数学题目生成工具</h1>
+        <el-button
+          class="settings-button"
+          circle
+          @click="showSettingsDialog = true"
+          title="设置"
+        >
+          <el-icon><Setting /></el-icon>
+        </el-button>
+      </div>
       <p class="subtitle">快速生成练习题目，支持四则运算和一元一次方程</p>
     </div>
+
+    <!-- Settings Dialog - modify by jx: common settings (music, sound, shake) -->
+    <SettingsDialog
+      v-model="showSettingsDialog"
+      :shake-enabled="gameSettings.shakeEnabled"
+      :music-enabled="gameSettings.musicEnabled"
+      :sound-enabled="gameSettings.soundEnabled"
+      @confirm="handleSettingsConfirm"
+    />
 
     <!-- Tabs -->
     <div class="tabs-section">
@@ -51,6 +70,11 @@
 // modify by jx: implement home page with tabs for arithmetic and equation pages
 
 import { ref } from 'vue';
+import { ElMessage } from 'element-plus';
+import { Setting } from '@element-plus/icons-vue';
+import SettingsDialog from '@/components/SettingsDialog.vue';
+import { useGameSettings, updateGameSettings } from '@/composables/useGameSettings';
+import { stopBattleBgMusic } from '@/composables/useBattleSounds';
 import ArithmeticPage from '@/views/ArithmeticPage.vue';
 import EquationPage from '@/views/EquationPage.vue';
 import FractionPage from '@/views/FractionPage.vue';
@@ -65,6 +89,16 @@ import PatternPage from '@/views/PatternPage.vue';
 
 // Active tab state
 const activeTab = ref('arithmetic');
+
+// Settings - modify by jx: common settings dialog in header
+const showSettingsDialog = ref(false);
+const gameSettings = useGameSettings();
+
+function handleSettingsConfirm(settings: { shakeEnabled: boolean; musicEnabled: boolean; soundEnabled: boolean }) {
+  updateGameSettings(settings);
+  if (!settings.musicEnabled) stopBattleBgMusic();
+  ElMessage.success('设置已保存');
+}
 </script>
 
 <style scoped>
@@ -79,11 +113,31 @@ const activeTab = ref('arithmetic');
   margin-bottom: 32px;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
 .title {
   font-size: 36px;
   font-weight: 700;
   color: #303133;
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.settings-button {
+  flex-shrink: 0;
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  color: #409eff !important;
+}
+
+.settings-button:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  color: #66b1ff !important;
 }
 
 .subtitle {

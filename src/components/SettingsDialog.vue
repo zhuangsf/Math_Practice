@@ -8,6 +8,35 @@
     class="settings-dialog"
   >
     <div class="settings-content">
+      <!-- Sound Settings Section - modify by jx: music and sound effect switches -->
+      <div class="settings-section">
+        <h3 class="section-title">声音设置</h3>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">背景音乐</span>
+            <span class="setting-description">战斗时的背景音乐</span>
+          </div>
+          <el-switch
+            v-model="musicEnabled"
+            active-text="开启"
+            inactive-text="关闭"
+          />
+        </div>
+        
+        <div class="setting-item">
+          <div class="setting-info">
+            <span class="setting-label">音效</span>
+            <span class="setting-description">答对、答错、攻击等音效</span>
+          </div>
+          <el-switch
+            v-model="soundEnabled"
+            active-text="开启"
+            inactive-text="关闭"
+          />
+        </div>
+      </div>
+
       <!-- Battle Settings Section -->
       <div class="settings-section">
         <h3 class="section-title">战斗设置</h3>
@@ -43,23 +72,31 @@ import { ref, watch } from 'vue';
 interface Props {
   modelValue: boolean;
   shakeEnabled: boolean;
+  musicEnabled: boolean;
+  soundEnabled: boolean;
 }
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void;
   (e: 'update:shakeEnabled', value: boolean): void;
-  (e: 'confirm', settings: { shakeEnabled: boolean }): void;
+  (e: 'update:musicEnabled', value: boolean): void;
+  (e: 'update:soundEnabled', value: boolean): void;
+  (e: 'confirm', settings: { shakeEnabled: boolean; musicEnabled: boolean; soundEnabled: boolean }): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: false,
-  shakeEnabled: false  // modify by jx: default off to disable energy orb shake after starting battle
+  shakeEnabled: false,  // modify by jx: default off to disable energy orb shake after starting battle
+  musicEnabled: true,
+  soundEnabled: true
 });
 
 const emit = defineEmits<Emits>();
 
 const visible = ref(props.modelValue);
 const shakeEnabled = ref(props.shakeEnabled);
+const musicEnabled = ref(props.musicEnabled);
+const soundEnabled = ref(props.soundEnabled);
 
 // Watch for prop changes
 watch(() => props.modelValue, (newVal) => {
@@ -70,6 +107,14 @@ watch(() => props.shakeEnabled, (newVal) => {
   shakeEnabled.value = newVal;
 });
 
+watch(() => props.musicEnabled, (newVal) => {
+  musicEnabled.value = newVal;
+});
+
+watch(() => props.soundEnabled, (newVal) => {
+  soundEnabled.value = newVal;
+});
+
 // Watch for visible change
 watch(visible, (newVal) => {
   emit('update:modelValue', newVal);
@@ -78,7 +123,13 @@ watch(visible, (newVal) => {
 // Handle confirm
 function handleConfirm() {
   emit('update:shakeEnabled', shakeEnabled.value);
-  emit('confirm', { shakeEnabled: shakeEnabled.value });
+  emit('update:musicEnabled', musicEnabled.value);
+  emit('update:soundEnabled', soundEnabled.value);
+  emit('confirm', {
+    shakeEnabled: shakeEnabled.value,
+    musicEnabled: musicEnabled.value,
+    soundEnabled: soundEnabled.value
+  });
   visible.value = false;
 }
 </script>

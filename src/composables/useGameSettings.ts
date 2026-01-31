@@ -5,7 +5,9 @@ import { ref } from 'vue';
 
 // Global settings state
 const settings = ref({
-  shakeEnabled: false  // modify by jx: default off to disable energy orb shake after starting battle
+  shakeEnabled: false,  // modify by jx: default off to disable energy orb shake after starting battle
+  musicEnabled: true,   // modify by jx: background music switch, default on
+  soundEnabled: true   // modify by jx: sound effects (win/lost/attack etc) switch, default on
 });
 
 /**
@@ -20,4 +22,11 @@ export function useGameSettings() {
  */
 export function setShakeEnabled(enabled: boolean) {
   settings.value.shakeEnabled = enabled;
+}
+
+/**
+ * Update game settings (shake, music, sound)
+ */
+export function updateGameSettings(updates: Partial<typeof settings.value>) {
+  Object.assign(settings.value, updates);
 }

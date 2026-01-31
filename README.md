@@ -163,7 +163,9 @@ Math_Practice/
 ├── public/                      # 静态资源
 ├── src/
 │   ├── assets/                  # 资源文件
-│   │   └── styles/              # 全局样式
+│   │   ├── styles/              # 全局样式
+│   │   └── sounds/              # 音效资源（见 src/assets/sounds/README.md）
+│   │       └── battle/          # 战斗模式音效（win_1~7 连续答对、lost/attack/defeat 等）
 │   ├── components/              # Vue组件
 │   │   ├── ControlPanel.vue     # 四则运算控制面板
 │   │   ├── EquationControlPanel.vue  # 方程控制面板
@@ -221,6 +223,7 @@ Math_Practice/
 │   │   ├── useQuestionGenerator.ts  # 四则运算题目生成逻辑
 │   │   ├── useBattleEngine.ts   # 战斗引擎（征服者/能量团 HP、伤害、战斗信息 log）
 │   │   ├── useBattleNavigation.ts  # 进入/退出战斗导航
+│   │   ├── useBattleSounds.ts  # 战斗模式音效（答对/答错/攻击/胜利/失败等）
 │   │   ├── useGameSettings.ts   # 游戏设置（持久化）
 │   │   ├── useEquationGenerator.ts  # 一元一次方程生成逻辑
 │   │   ├── useFractionGenerator.ts  # 分数运算生成逻辑
@@ -677,11 +680,21 @@ Created with ❤️ for elementary school math practice.
 ---
 
 **版本**: 1.0.0
-**更新日期**: 2026-01-29
+**更新日期**: 2026-01-31
 
 ## 更新日志
 
-### 2026-01-29 (最新)
+### 2026-01-31 (最新)
+- ✅ 新增战斗模式音效系统（useBattleSounds）
+  - 答对连击音效：win_1~win_7（1~7 连击不同音效）
+  - 答错/超时音效：lost
+  - 能量团攻击音效：attack
+  - 战斗胜利音效：find
+  - 战斗失败音效：defeat
+- ✅ 音效资源目录：src/assets/sounds/battle/（见 src/assets/sounds/README.md）
+- ✅ 游戏设置支持音效开关（SettingsDialog、useGameSettings）
+
+### 2026-01-29
 - ✅ 新增质数与合数功能，支持判断质数、判断合数和质因数分解
 - ✅ 新增比较大小功能，支持整数、小数和分数的比较
 - ✅ 新增找规律功能，支持等差数列、等比数列、斐波那契数列和平方数列

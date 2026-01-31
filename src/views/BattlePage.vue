@@ -192,6 +192,7 @@ import { useBattleEngine } from '@/composables/useBattleEngine';
 import { useBattleNavigation } from '@/composables/useBattleNavigation';
 import { useQuestionGenerator } from '@/composables/useQuestionGenerator';
 import { useGameSettings } from '@/composables/useGameSettings';
+import { useBattleSounds } from '@/composables/useBattleSounds';
 import type { BattleRecord, BattleResult as BattleResultType } from '@/types';
 
 // Get battle navigation state
@@ -223,6 +224,9 @@ const battleLogListRef = ref<HTMLElement | null>(null);  // modify by jx: ref fo
 // modify by jx: fix destructuring issue that causes undefined error
 const gameSettingsRef = useGameSettings();
 const shakeEnabled = computed(() => gameSettingsRef.value?.shakeEnabled ?? false);  // modify by jx: default off to disable energy orb shake after starting battle
+
+// modify by jx: battle sound effects - only play when resources exist
+const battleSounds = useBattleSounds();
 
 // Get battle state from engine
 const battleState = computed(() => {
@@ -297,6 +301,15 @@ function initBattleEngine() {
       };
       const generated = generateQuestions(mutableConfig);
       return generated.length > 0 ? generated : [];
+    },
+    {
+      playCorrect: (combo) => battleSounds.playCorrect(combo),
+      playWrong: () => battleSounds.playWrong(),
+      playAttack: () => battleSounds.playAttack(),
+      playDefeat: () => battleSounds.playDefeat(),
+      playVictory: () => battleSounds.playVictory(),
+      playBattleBg: () => battleSounds.playBattleBg(),
+      stopBattleBg: () => battleSounds.stopBattleBg()
     }
   );
   
@@ -430,6 +443,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.title = defaultDocumentTitle;
   window.removeEventListener('keydown', handleKeydown);
+  battleSounds.stopBattleBg();
   if (battleEngine.value) {
     battleEngine.value.clearAllTimers();
   }

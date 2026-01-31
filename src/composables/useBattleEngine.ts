@@ -2,8 +2,19 @@
 // modify by jx: implement battle engine with countdown management, damage calculation, and battle state management
 // Terminology: 征服者=player (playerHP, log messages), 能量团=enemy (enemyHP, enemyAttack, log messages). See README 战斗模式术语.
 
-import { reactive, computed, onUnmounted } from 'vue';
+import { reactive, computed } from 'vue';
 import type { BattleState, BattleConfig, BattleRecord, Question, BattleResult, BattleLogEntry, BattleLogType } from '@/types';
+
+/** Optional sound hooks - play only when provided and resource exists (handled in useBattleSounds) */
+export interface BattleSoundHooks {
+  playCorrect: (combo: number) => void;
+  playWrong: () => void;
+  playAttack: () => void;
+  playDefeat: () => void;
+  playVictory: () => void;
+  playBattleBg?: () => void;
+  stopBattleBg?: () => void;
+}
 
 /**
  * Calculate damage based on remaining time
@@ -78,12 +89,14 @@ export function createBattleRecord(
 /**
  * Battle Engine Composable
  * Manages all battle logic including timers, damage calculation, and state transitions
+ * @param soundHooks - optional; when provided, plays sounds on correct/wrong/attack/defeat/victory
  */
 export function useBattleEngine(
   config: BattleConfig,
   questionType: string,
   questionTypeName: string,
-  questionGenerator: () => Question[]
+  questionGenerator: () => Question[],
+  soundHooks?: BattleSoundHooks
 ) {
   // modify by jx: helper to push battle log entry for right-side detail panel
   function pushLog(type: BattleLogType, message: string, detail?: BattleLogEntry['detail']): void {
@@ -150,6 +163,7 @@ export function useBattleEngine(
   function handleEnemyAttack(): void {
     if (state.phase !== 'answering' || state.battleResult) return;
 
+    soundHooks?.playAttack();
     state.playerHP = Math.max(0, state.playerHP - state.enemyAttack);
     pushLog('enemy_attack', `能量团攻击！征服者受到 ${state.enemyAttack} 伤害，征服者剩余 HP ${state.playerHP.toFixed(1)}`, { playerHP: state.playerHP, enemyAttack: state.enemyAttack });
 
@@ -163,6 +177,7 @@ export function useBattleEngine(
   function handleTimeUp(): void {
     if (state.phase !== 'answering' || !state.currentQuestion) return;
 
+    soundHooks?.playWrong();
     const qNum = state.questionCount + 1;
     state.enemyAttack = updateEnemyAttack(state.enemyAttack);
     state.combo = 0;
@@ -193,9 +208,11 @@ export function useBattleEngine(
       state.correctCount++;
       state.combo++;
       state.maxCombo = Math.max(state.maxCombo, state.combo);
+      soundHooks?.playCorrect(state.combo);
       const comboText = state.combo > 1 ? `，${state.combo} 连击` : '';
       pushLog('correct', `第 ${qNum} 题 正确！${expr} = ${state.currentQuestion.answer}，造成 ${damage.toFixed(1)} 伤害，能量团剩余 HP ${state.enemyHP.toFixed(1)}${comboText}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, damage, combo: state.combo, enemyHP: state.enemyHP });
     } else {
+      soundHooks?.playWrong();
       state.enemyAttack = updateEnemyAttack(state.enemyAttack);
       state.combo = 0;
       pushLog('wrong', `第 ${qNum} 题 错误（${expr} = ${state.currentQuestion.answer}），能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, enemyAttack: state.enemyAttack });
@@ -224,11 +241,16 @@ export function useBattleEngine(
 
   // End battle
   function endBattle(result: BattleResult): void {
+    soundHooks?.stopBattleBg?.();
     state.phase = 'ended';
     state.battleResult = result;
-    if (result === 'victory') pushLog('victory', '战斗胜利！驯服能量团成功。');
-    else if (result === 'defeat') pushLog('defeat', '战斗失败，征服者 HP 归零。');
-    else if (result === 'retreat') pushLog('retreat', '已撤退。');
+    if (result === 'victory') {
+      soundHooks?.playVictory();
+      pushLog('victory', '战斗胜利！驯服能量团成功。');
+    } else if (result === 'defeat') {
+      soundHooks?.playDefeat();
+      pushLog('defeat', '战斗失败，征服者 HP 归零。');
+    } else if (result === 'retreat') pushLog('retreat', '已撤退。');
     clearAllTimers();
   }
 
@@ -244,6 +266,8 @@ export function useBattleEngine(
     state.phase = 'preparing';
     state.timeRemaining = config.prepareTime;
     let timeLeft = config.prepareTime;
+    // modify by jx: start bg music on user click (within gesture context) so autoplay policy allows it
+    soundHooks?.playBattleBg?.();
 
     prepareTimer = window.setInterval(() => {
       timeLeft--;
@@ -303,6 +327,7 @@ export function useBattleEngine(
   // Reset battle
   function resetBattle(): void {
     clearAllTimers();
+    soundHooks?.stopBattleBg?.();
 
     state.phase = 'idle';
     state.playerHP = config.playerHP;
