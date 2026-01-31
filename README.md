@@ -218,7 +218,8 @@ Math_Practice/
 │   │       ├── BattleQuestion.vue  # 战斗题目
 │   │       ├── BattleHUD.vue       # 征服者/能量团 HUD（血量、题目、连击）
 │   │       ├── BattleResult.vue    # 战斗结果（胜利/失败/撤退）
-│   │       └── BattleTimer.vue     # 答题倒计时
+│   │       ├── BattleTimer.vue     # 答题倒计时
+│   │       └── BattleWrongQuestionDialog.vue  # 战斗错题查看对话框
 │   ├── composables/             # 组合式函数
 │   │   ├── useQuestionGenerator.ts  # 四则运算题目生成逻辑
 │   │   ├── useBattleEngine.ts   # 战斗引擎（征服者/能量团 HP、伤害、战斗信息 log）
@@ -685,6 +686,14 @@ Created with ❤️ for elementary school math practice.
 ## 更新日志
 
 ### 2026-01-31 (最新)
+- ✅ 新增战斗结算错题查看功能
+  - 战斗结束后可查看所有错题（包括答错和超时题目）
+  - 新增 BattleWrongQuestionDialog 组件用于展示错题详情
+  - BattleState 和 BattleRecord 支持记录错题信息（wrongQuestions 字段）
+  - 错题显示学生答案、正确答案和题目详情
+- ✅ 优化战斗准备界面
+  - 隐藏能量团 HP、答题时间和题目数量显示
+  - 调整布局间距，提升视觉效果
 - ✅ 新增战斗模式音效系统（useBattleSounds）
   - 答对连击音效：win_1~win_7（1~7 连击不同音效）
   - 答错/超时音效：lost

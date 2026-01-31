@@ -698,6 +698,18 @@ export interface BattleConfig {
   // modify by jx: removed difficulty field, questions use config from main settings
 }
 
+// Battle wrong question record; modify by jx: add for battle settlement wrong-question review
+// studentAnswer is null when timeout (display as "未作答")
+export interface BattleWrongQuestion {
+  questionId: string;
+  question: Question;
+  studentAnswer: number | null;   // null when timeout
+  correctAnswer: number;
+  operationType: OperationType;
+  operandCount: 2 | 3 | 4;
+  isTimeout: boolean;
+}
+
 // Battle state (Terminology: 征服者=player, 能量团=enemy. See README 战斗模式术语.)
 export interface BattleState {
   phase: BattlePhase;                    // Current battle phase
@@ -715,6 +727,7 @@ export interface BattleState {
   lastDamage: number;                    // Last single hit damage (for popup display); modify by jx: add for actual damage popup
   isRetreated: boolean;                  // Whether player retreated
   battleLog: BattleLogEntry[];           // modify by jx: detailed battle log for right panel
+  wrongQuestions: BattleWrongQuestion[]; // modify by jx: wrong questions for settlement review
 }
 
 // Battle record for history
@@ -741,6 +754,7 @@ export interface BattleRecord {
     finalEnemyAttack: number;   // Final enemy attack power
     remainingPlayerHP: number;  // Remaining player HP
   };
+  wrongQuestions?: BattleWrongQuestion[]; // modify by jx: wrong questions for settlement review
 }
 
 // Battle question type for different math modules

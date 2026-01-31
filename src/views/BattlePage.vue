@@ -66,20 +66,7 @@
           
           <h2 class="start-title">⚡ 准备驯服能量团 ⚡</h2>
           
-          <div class="battle-preview-info">
-            <div class="preview-item">
-              <span class="label">能量团HP</span>
-              <span class="value">{{ battleConfig.enemyHP }}</span>
-            </div>
-            <div class="preview-item">
-              <span class="label">答题时间</span>
-              <span class="value">{{ battleConfig.questionTime }}秒</span>
-            </div>
-            <div class="preview-item">
-              <span class="label">题目数量</span>
-              <span class="value">{{ battleConfig.questionCount }}题</span>
-            </div>
-          </div>
+          <!-- modify by jx: hide HP/time/question count on battle prep screen per user request -->
           
           <p class="start-hint">快速解答题目来驯服能量团！</p>
           
@@ -248,7 +235,8 @@ const battleState = computed(() => {
     maxCombo: 0,
     totalDamage: 0,
     isRetreated: false,
-    battleLog: []
+    battleLog: [],
+    wrongQuestions: []  // modify by jx: add for default state compatibility
   };
 });
 
@@ -532,17 +520,18 @@ onUnmounted(() => {
   align-items: center;
 }
 
+/* modify by jx: reduce padding to move start button up on prep screen */
 .start-content {
   text-align: center;
-  padding: 60px;
+  padding: 40px 60px;
 }
 
-/* Energy Ball Preview */
+/* Energy Ball Preview; modify by jx: reduce bottom margin to move start button up */
 .energy-ball-preview {
   position: relative;
   width: 200px;
   height: 200px;
-  margin: 0 auto 40px;
+  margin: 0 auto 24px;
 }
 
 .energy-core {
@@ -616,37 +605,15 @@ onUnmounted(() => {
   font-size: 36px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
-.battle-preview-info {
-  display: flex;
-  justify-content: center;
-  gap: 48px;
-  margin-bottom: 24px;
-}
-
-.preview-item {
-  text-align: center;
-}
-
-.preview-item .label {
-  display: block;
-  font-size: 14px;
-  color: #909399;
-  margin-bottom: 8px;
-}
-
-.preview-item .value {
-  font-size: 28px;
-  font-weight: 700;
-  color: #67c23a;
-}
+/* modify by jx: removed battle-preview-info styles - HP/time/question count hidden on prep screen */
 
 .start-hint {
   font-size: 16px;
   color: #909399;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .start-button {
@@ -856,15 +823,6 @@ onUnmounted(() => {
   }
 
   .start-title {
-    font-size: 24px;
-  }
-
-  .battle-preview-info {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .preview-item .value {
     font-size: 24px;
   }
 

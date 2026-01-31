@@ -4,7 +4,7 @@
     :show-close="false"
     :close-on-click-modal="false"
     :close-on-press-escape="false"
-    width="480px"
+    width="560px"
     class="battle-result-dialog"
   >
     <!-- Victory -->
@@ -88,6 +88,14 @@
     <!-- Actions -->
     <template #footer>
       <div class="result-actions">
+        <el-button
+          v-if="hasWrongQuestions"
+          type="warning"
+          size="large"
+          @click="showWrongQuestionDialog = true"
+        >
+          📋 查看错题
+        </el-button>
         <el-button size="large" @click="handleRematch">
           🔄 再战一场
         </el-button>
@@ -96,6 +104,13 @@
         </el-button>
       </div>
     </template>
+
+    <!-- Wrong Question Dialog; modify by jx: add for settlement wrong-question review -->
+    <BattleWrongQuestionDialog
+      v-model="showWrongQuestionDialog"
+      :wrong-questions="record.wrongQuestions ?? []"
+      :total-questions="record.stats.totalQuestions"
+    />
   </el-dialog>
 </template>
 
@@ -103,7 +118,8 @@
 // modify by jx: implement battle result display dialog component
 // Terminology: 能量团 (victory/defeat copy). See README 战斗模式术语.
 
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
+import BattleWrongQuestionDialog from './BattleWrongQuestionDialog.vue';
 import type { BattleRecord, BattleResult } from '@/types';
 
 interface Props {
@@ -120,6 +136,12 @@ interface Emits {
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
+
+const showWrongQuestionDialog = ref(false);
+
+const hasWrongQuestions = computed(
+  () => (props.record.wrongQuestions?.length ?? 0) > 0
+);
 
 // Visible state
 const visible = computed({
@@ -151,11 +173,11 @@ function handleReturn() {
 }
 
 .battle-result-dialog .el-dialog__body {
-  padding: 32px;
+  padding: 32px 40px;
 }
 
 .battle-result-dialog .el-dialog__footer {
-  padding: 16px 32px 24px;
+  padding: 20px 40px 28px;
 }
 </style>
 
@@ -264,23 +286,27 @@ function handleReturn() {
   margin-top: 24px;
 }
 
-/* Actions */
+/* Actions; modify by jx: add padding and gap so buttons not stuck to edges */
 .result-actions {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  padding: 0 8px;
 }
 
 .result-actions .el-button {
-  min-width: 140px;
+  min-width: 130px;
   height: 48px;
   font-size: 16px;
   font-weight: 600;
   border-radius: 12px;
+  flex-shrink: 0;
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .result-stats {
     grid-template-columns: repeat(2, 1fr);
   }

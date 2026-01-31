@@ -3,7 +3,7 @@
 // Terminology: 征服者=player (playerHP, log messages), 能量团=enemy (enemyHP, enemyAttack, log messages). See README 战斗模式术语.
 
 import { reactive, computed } from 'vue';
-import type { BattleState, BattleConfig, BattleRecord, Question, BattleResult, BattleLogEntry, BattleLogType } from '@/types';
+import type { BattleState, BattleConfig, BattleRecord, Question, BattleResult, BattleLogEntry, BattleLogType, BattleWrongQuestion, OperationType } from '@/types';
 
 /** Optional sound hooks - play only when provided and resource exists (handled in useBattleSounds) */
 export interface BattleSoundHooks {
@@ -60,7 +60,7 @@ export function createBattleRecord(
     ? Math.round((state.correctCount / state.questionCount) * 1000) / 10 
     : 0;
 
-  return {
+  const record: BattleRecord = {
     id: generateBattleRecordId(),
     timestamp: new Date(),
     duration: Math.round(totalTime * 10) / 10,
@@ -84,6 +84,11 @@ export function createBattleRecord(
       remainingPlayerHP: state.playerHP
     }
   };
+  // modify by jx: include wrong questions for settlement review
+  if (state.wrongQuestions?.length) {
+    record.wrongQuestions = [...state.wrongQuestions];
+  }
+  return record;
 }
 
 /**
@@ -104,6 +109,22 @@ export function useBattleEngine(
     state.battleLog.push({ id, type, message, detail, timestamp: Date.now() });
   }
 
+  // modify by jx: helper to build BattleWrongQuestion from current question
+  function buildWrongQuestion(studentAnswer: number | null, isTimeout: boolean): BattleWrongQuestion {
+    const q = state.currentQuestion!;
+    const operationType: OperationType = q.operators?.[0] ?? 'add';
+    const operandCount = (Math.min(4, Math.max(2, (q.operators?.length ?? 1) + 1)) || 2) as 2 | 3 | 4;
+    return {
+      questionId: q.id,
+      question: q,
+      studentAnswer,
+      correctAnswer: q.answer,
+      operationType,
+      operandCount,
+      isTimeout
+    };
+  }
+
   // Battle state
   const state = reactive<BattleState>({
     phase: 'idle',
@@ -120,7 +141,8 @@ export function useBattleEngine(
     totalDamage: 0,
     lastDamage: 0,  // modify by jx: last hit damage for popup display
     isRetreated: false,
-    battleLog: []   // modify by jx: detailed battle log for right panel
+    battleLog: [],  // modify by jx: detailed battle log for right panel
+    wrongQuestions: []  // modify by jx: wrong questions for settlement review
   });
 
   // Timer references
@@ -181,6 +203,8 @@ export function useBattleEngine(
     const qNum = state.questionCount + 1;
     state.enemyAttack = updateEnemyAttack(state.enemyAttack);
     state.combo = 0;
+    // modify by jx: record wrong question for settlement review
+    state.wrongQuestions.push(buildWrongQuestion(null, true));
     pushLog('timeout', `第 ${qNum} 题 超时，能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: state.currentQuestion.expression, enemyAttack: state.enemyAttack });
 
     // Move to next question
@@ -215,6 +239,8 @@ export function useBattleEngine(
       soundHooks?.playWrong();
       state.enemyAttack = updateEnemyAttack(state.enemyAttack);
       state.combo = 0;
+      // modify by jx: record wrong question for settlement review
+      state.wrongQuestions.push(buildWrongQuestion(answer, false));
       pushLog('wrong', `第 ${qNum} 题 错误（${expr} = ${state.currentQuestion.answer}），能量团攻击力上升至 ${state.enemyAttack.toFixed(1)}`, { questionNum: qNum, expression: expr, answer: state.currentQuestion.answer, enemyAttack: state.enemyAttack });
     }
 
@@ -287,6 +313,7 @@ export function useBattleEngine(
 
     // Reset state and clear log for new battle; modify by jx: push battle start log
     state.battleLog = [];
+    state.wrongQuestions = [];
     state.phase = 'answering';
     state.playerHP = config.playerHP;
     state.enemyHP = config.enemyHP;
@@ -344,6 +371,7 @@ export function useBattleEngine(
     state.lastDamage = 0;  // modify by jx: reset last damage on battle reset
     state.isRetreated = false;
     state.battleLog = [];  // modify by jx: clear log on reset
+    state.wrongQuestions = [];
   }
 
   // Get battle record

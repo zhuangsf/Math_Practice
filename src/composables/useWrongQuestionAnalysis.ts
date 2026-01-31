@@ -6,6 +6,7 @@ import type {
   StudentAnswer, 
   WrongQuestion, 
   WrongQuestionStats,
+  BattleWrongQuestion,
   FractionQuestion,
   FractionWrongQuestion,
   FractionWrongQuestionStats,
@@ -112,6 +113,28 @@ export function calculateWrongQuestionStats(
     }
   });
 
+  return stats;
+}
+
+/**
+ * Calculate wrong question stats from battle wrong questions; modify by jx: add for battle settlement
+ * @param wrongQuestions Battle wrong questions (incl. timeout with studentAnswer=null)
+ * @returns WrongQuestionStats for tutoring plan generation
+ */
+export function calculateWrongQuestionStatsFromBattle(
+  wrongQuestions: BattleWrongQuestion[]
+): WrongQuestionStats {
+  const stats: WrongQuestionStats = {
+    byOperationType: { add: 0, subtract: 0, multiply: 0, divide: 0 },
+    byOperandCount: { binary: 0, ternary: 0, quaternary: 0 },
+    total: wrongQuestions.length
+  };
+  wrongQuestions.forEach((wq) => {
+    stats.byOperationType[wq.operationType]++;
+    if (wq.operandCount === 2) stats.byOperandCount.binary++;
+    else if (wq.operandCount === 3) stats.byOperandCount.ternary++;
+    else stats.byOperandCount.quaternary++;
+  });
   return stats;
 }
 
