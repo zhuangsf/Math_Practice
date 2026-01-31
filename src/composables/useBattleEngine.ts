@@ -150,6 +150,7 @@ export function useBattleEngine(
   let questionTimer: number | null = null;
   let enemyAttackTimer: number | null = null;
   let lastTimeUpdate: number = 0;
+  let battleStartTime: number = 0;  // modify by jx: track actual battle start time for real duration calculation
 
   // Computed properties
   const playerHPPercent = computed(() => (state.playerHP / config.playerHP) * 100);
@@ -330,6 +331,7 @@ export function useBattleEngine(
     state.timeRemaining = config.questionTime;
     pushLog('phase', '战斗开始！');
 
+    battleStartTime = Date.now();  // modify by jx: record actual battle start time for real duration calculation
     lastTimeUpdate = Date.now();
 
     // Start question timer (precise to 0.1 second)
@@ -376,17 +378,16 @@ export function useBattleEngine(
 
   // Get battle record
   function getBattleRecord(): BattleRecord {
+    // modify by jx: use actual elapsed time from battle start instead of theoretical formula
     const endTime = Date.now();
-    const startTime = endTime - 
-      (state.questionCount * config.questionTime * 1000) - 
-      (config.prepareTime * 1000);
+    const actualDuration = battleStartTime > 0 ? (endTime - battleStartTime) / 1000 : 0;
 
     return createBattleRecord(
       state,
       config,
       questionType,
       questionTypeName,
-      (endTime - startTime) / 1000
+      actualDuration
     );
   }
 

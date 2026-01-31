@@ -682,6 +682,7 @@ export interface BattleLogEntry {
     combo?: number;
     playerHP?: number;
     enemyAttack?: number;
+    enemyHP?: number;             // modify by jx: add enemyHP for battle log detail
   };
   timestamp: number;              // Time in ms for ordering
 }
